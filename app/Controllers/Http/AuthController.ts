@@ -3,8 +3,9 @@ import { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
 import User from 'App/Models/User'
 import Hash from '@ioc:Adonis/Core/Hash'
 
+
 export default class AuthController {
-    public async register({ request, response }: HttpContextContract) {
+    public async register({ auth, request, response }: HttpContextContract) {
         const { name, email, password, role } = request.only(['name', 'email', 'password', 'role'])
 
         const user = new User()
@@ -13,8 +14,10 @@ export default class AuthController {
         user.password = password // Hashing is handled in the model
         user.role = role
         await user.save()
+        const token = await auth.use('api').generate(user)
 
-        return response.created({ message: 'User registered successfully', user })
+
+        return response.created({ message: 'User registered successfully', user, token })
     }
 
     public async login({ request, response, auth }: HttpContextContract) {
@@ -24,7 +27,7 @@ export default class AuthController {
         try {
             // Find the user by phone number
             const user = await User.findBy('email', email)
-            console.log('users--------', user)
+
             // Check if user exists and verify password
             if (!user || !(await Hash.verify(user.password, password))) {
                 return response.status(401).json({ message: 'Invalid credentials' })
@@ -38,7 +41,6 @@ export default class AuthController {
             return response.send(token)
         } catch (error) {
             // Handle errors
-            console.error('Login error:', error.message)
             return response.status(500).json({ error: { message: 'Internal server error' } })
         }
     }

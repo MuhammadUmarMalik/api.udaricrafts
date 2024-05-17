@@ -34,9 +34,38 @@ Route.get('health', async ({ response }) => {
 })
 
 //admin endpoints 
+
+Route.group(() => {
+  //auth 
+  Route.put('/users/:id', 'AuthController.update')
+  Route.delete('/users/:id', 'AuthController.destroy')
+  // Categories
+  Route.post('/categories', 'CategoriesController.store')
+  Route.get('/categories', 'CategoriesController.index')
+  Route.put('/categories/:id', 'CategoriesController.update')
+  Route.delete('/categories/:id', 'CategoriesController.destroy')
+  // Products
+  Route.post('/products', 'ProductsController.store')
+  Route.get('/products', 'ProductsController.index')
+  Route.put('/products/:id', 'ProductsController.update')
+  Route.delete('/products/:id', 'ProductsController.destroy')
+  //reviews
+  Route.get('/reviews', 'ReviewsController.index')
+  Route.put('/reviews/:id', 'ReviewsController.update')
+  Route.delete('/reviews/:id', 'ReviewsController.destroy')
+
+}).prefix('api').middleware(['auth'])
+
+//Authentication Endpoints
 Route.post('/register', 'AuthController.register')
 Route.post('/login', 'AuthController.login')
-Route.get('/users', 'AuthController.index')
-Route.get('/users/:id', 'AuthController.show')
-Route.put('/users/:id', 'AuthController.update')
-Route.delete('/users/:id', 'AuthController.destroy')
+
+// Categories endpoint for public user
+Route.get('/categories', 'CategoriesController.index')
+// Products endpoint for public user
+Route.get('/products/:id', 'ProductsController.show')
+Route.post("/products/pagination", "ProductsController.pagination")
+//review endpoint for public user
+Route.post('/reviews', 'ReviewsController.store')
+Route.get('/reviews', 'ReviewsController.index')
+

@@ -41,4 +41,6 @@ Server.middleware.register([
 |
 */
 Server.middleware.registerNamed({
+  adminAuth: () => import('App/Middleware/AdminAuth'),
+  auth: () => import('App/Middleware/Auth')
 })
