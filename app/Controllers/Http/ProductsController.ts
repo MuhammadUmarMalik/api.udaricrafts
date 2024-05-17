@@ -12,7 +12,7 @@ export default class ProductsController {
             await Product.create(product)
             return response.send(Response({ message: 'Product is successfully added.' }))
         } catch (error) {
-            console.log(error);
+
             return response.status(400).send(error)
         }
     }
@@ -39,7 +39,7 @@ export default class ProductsController {
             })
             return response.send(Response(data))
         } catch (error) {
-            console.log(error);
+
             return response.status(400).send(error)
         }
     }
@@ -48,7 +48,7 @@ export default class ProductsController {
             const product = await Product.findOrFail(params.product?.id)
             return response.send(product);
         } catch (error) {
-            console.log(error);
+
             return response.status(400).send(error)
         }
     }
@@ -59,7 +59,7 @@ export default class ProductsController {
             await product.merge(data).save()
             return response.send(Response({ message: 'Product updated successfully' }))
         } catch (error) {
-            console.log(error);
+
             return response.status(400).send(error)
         }
     }
@@ -70,7 +70,7 @@ export default class ProductsController {
             await product.delete()
             return response.send(Response({ message: 'Product Deleted Successfully' }))
         } catch (error) {
-            console.log(error);
+
             return response.status(400).send(error)
         }
     }
@@ -89,7 +89,6 @@ export default class ProductsController {
             const paginatedData = await PaginationUtil(query, paginationOptions, response);
             return response.json(paginatedData);
         } catch (error) {
-            console.log(error);
             return response.status(400).send(error)
         }
     }

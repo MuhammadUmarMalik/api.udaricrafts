@@ -10,7 +10,7 @@ export default class ReviewsController {
             await Review.create(review)
             return response.send(Response({ message: 'Ctaegory is successfully added.' }))
         } catch (error) {
-            console.log(error);
+
             return response.status(400).send(error)
         }
     }
@@ -20,7 +20,7 @@ export default class ReviewsController {
             const review = await Review.all()
             return response.send(Response(review))
         } catch (error) {
-            console.log(error);
+
             return response.status(400).send(error)
         }
     }
@@ -32,7 +32,7 @@ export default class ReviewsController {
             await review.merge(data).save()
             return response.send(Response({ message: 'Review updated successfully' }))
         } catch (error) {
-            console.log(error);
+
             return response.status(400).send(error)
         }
     }
@@ -43,7 +43,6 @@ export default class ReviewsController {
             await review.delete()
             return response.send(Response({ message: 'Review Deleted Successfully' }))
         } catch (error) {
-            console.log(error);
             return response.status(400).send(error)
         }
     }

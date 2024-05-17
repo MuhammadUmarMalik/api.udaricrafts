@@ -41,7 +41,6 @@ export default class AuthController {
             return response.send(token)
         } catch (error) {
             // Handle errors
-            console.error('Login error:', error.message)
             return response.status(500).json({ error: { message: 'Internal server error' } })
         }
     }

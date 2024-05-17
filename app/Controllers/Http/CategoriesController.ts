@@ -9,8 +9,7 @@ export default class CategoriesController {
             const category = await request.validate(CategoryValidator)
             await Category.create(category)
             return response.send(Response({ message: 'Ctaegory is successfully added.' }))
-        } catch (error) {
-            console.log(error);
+        } catch (error) { 
             return response.status(400).send(error)
         }
     }
@@ -32,7 +31,7 @@ export default class CategoriesController {
             await category.merge(data).save()
             return response.send(Response({ message: 'Category updated successfully' }))
         } catch (error) {
-            console.log(error);
+
             return response.status(400).send(error)
         }
     }
@@ -43,7 +42,7 @@ export default class CategoriesController {
             await category.delete()
             return response.send(Response({ message: 'Category Deleted Successfully' }))
         } catch (error) {
-            console.log(error);
+
             return response.status(400).send(error)
         }
     }
