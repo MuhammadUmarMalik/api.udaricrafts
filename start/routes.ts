@@ -32,3 +32,11 @@ Route.get('health', async ({ response }) => {
     ? response.ok(report)
     : response.badRequest(report)
 })
+
+//admin endpoints 
+Route.post('/register', 'AuthController.register')
+Route.post('/login', 'AuthController.login')
+Route.get('/users', 'AuthController.index')
+Route.get('/users/:id', 'AuthController.show')
+Route.put('/users/:id', 'AuthController.update')
+Route.delete('/users/:id', 'AuthController.destroy')
