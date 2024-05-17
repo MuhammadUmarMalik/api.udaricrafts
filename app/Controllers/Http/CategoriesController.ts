@@ -19,7 +19,6 @@ export default class CategoriesController {
             const category = await Category.all()
             return response.send(Response(category))
         } catch (error) {
-            console.log(error);
             return response.status(400).send(error)
         }
     }
@@ -31,7 +30,6 @@ export default class CategoriesController {
             await category.merge(data).save()
             return response.send(Response({ message: 'Category updated successfully' }))
         } catch (error) {
-
             return response.status(400).send(error)
         }
     }
@@ -42,7 +40,6 @@ export default class CategoriesController {
             await category.delete()
             return response.send(Response({ message: 'Category Deleted Successfully' }))
         } catch (error) {
-
             return response.status(400).send(error)
         }
     }
