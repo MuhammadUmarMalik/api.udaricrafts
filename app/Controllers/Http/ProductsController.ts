@@ -3,8 +3,6 @@ import Product from 'App/Models/Product';
 import { Response } from 'App/Utils/ApiUtil';
 import ProductValidator from 'App/Validators/ProductValidator';
 import { PaginationUtil } from 'App/Utils/PaginationUtil';
-
-
 export default class ProductsController {
     public async store({ request, response }: HttpContextContract) {
         try {
@@ -12,7 +10,6 @@ export default class ProductsController {
             await Product.create(product)
             return response.send(Response({ message: 'Product is successfully added.' }))
         } catch (error) {
-
             return response.status(400).send(error)
         }
     }
@@ -45,10 +42,9 @@ export default class ProductsController {
     }
     public async show({ params, response }: HttpContextContract) {
         try {
-            const product = await Product.findOrFail(params.product?.id)
+            const product = await Product.findOrFail(params.id)
             return response.send(product);
         } catch (error) {
-
             return response.status(400).send(error)
         }
     }

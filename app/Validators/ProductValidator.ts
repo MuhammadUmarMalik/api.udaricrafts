@@ -25,7 +25,6 @@ export default class ProductValidator {
    */
   public schema = schema.create({
     name: schema.string([
-      rules.unique({ table: 'Product', column: 'name' }),
       rules.required(),
     ]),
     category_id: schema.number([rules.required()]),
@@ -52,7 +51,6 @@ export default class ProductValidator {
    *
    */
   public messages: CustomMessages = {
-    'name.unique': 'The product is already exists.',
     'name.required': 'The name cannot be empty.',
     'category_id.required': 'The category_id cannot be empty.',
     'description.required': 'The description cannot be empty',
