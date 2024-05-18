@@ -1,6 +1,6 @@
 import type { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
 import Review from 'App/Models/Review';
-import { Response } from 'app/Utils/ApiUtil';
+import { Response } from 'App/Utils/ApiUtil';
 import ReviewValidator from 'App/Validators/ReviewValidator';
 
 export default class ReviewsController {
@@ -8,9 +8,8 @@ export default class ReviewsController {
         try {
             const review = await request.validate(ReviewValidator)
             await Review.create(review)
-            return response.send(Response({ message: 'Ctaegory is successfully added.' }))
+            return response.send(Response({ message: 'Review is successfully added.' }))
         } catch (error) {
-
             return response.status(400).send(error)
         }
     }
@@ -20,7 +19,6 @@ export default class ReviewsController {
             const review = await Review.all()
             return response.send(Response(review))
         } catch (error) {
-
             return response.status(400).send(error)
         }
     }
@@ -32,7 +30,7 @@ export default class ReviewsController {
             await review.merge(data).save()
             return response.send(Response({ message: 'Review updated successfully' }))
         } catch (error) {
-
+            console.log(error)
             return response.status(400).send(error)
         }
     }

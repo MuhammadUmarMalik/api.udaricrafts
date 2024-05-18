@@ -7,7 +7,7 @@ export default class Review extends BaseModel {
   public id: number
 
   @column()
-  public prodcutId: number
+  public product_id: number
   @column()
   public rating: string
   @column()
@@ -17,7 +17,7 @@ export default class Review extends BaseModel {
   @column()
   public email: string
   @column()
-  public status: string
+  public status: boolean
 
   @column.dateTime({ autoCreate: true })
   public createdAt: DateTime
