@@ -17,7 +17,7 @@ export default class AuthController {
         const token = await auth.use('api').generate(user)
 
 
-        return response.created({ message: 'User registered successfully', user, token })
+        return response.created({ message: 'Success', user, token })
     }
 
     public async login({ request, response, auth }: HttpContextContract) {
@@ -63,7 +63,7 @@ export default class AuthController {
 
         await user.save()
 
-        return response.ok({ message: 'User updated successfully', user })
+        return response.ok({ message: 'Success', user })
     }
 
     public async destroy({ params, response }: HttpContextContract) {
@@ -73,6 +73,6 @@ export default class AuthController {
         }
 
         await user.delete()
-        return response.ok({ message: 'User deleted successfully' })
+        return response.ok({ message: 'Success' })
     }
 }

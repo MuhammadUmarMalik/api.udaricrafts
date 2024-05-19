@@ -3,13 +3,34 @@ import Product from 'App/Models/Product';
 import { Response } from 'App/Utils/ApiUtil';
 import ProductValidator from 'App/Validators/ProductValidator';
 import { PaginationUtil } from 'App/Utils/PaginationUtil';
+import ProductImage from 'App/Models/ProductImage';
 export default class ProductsController {
     public async store({ request, response }: HttpContextContract) {
         try {
-            const product = await request.validate(ProductValidator)
-            await Product.create(product)
-            return response.send(Response({ message: 'Product is successfully added.' }))
+            const data = await request.validate(ProductValidator)
+            let product = new Product();
+            product.name = data.name;
+            product.categoryId = data.category_id;
+            product.description = data.description;
+            product.story = data.story;
+            product.sizes = JSON.stringify(data.sizes);
+            product.colors = JSON.stringify(data.colors);
+            product.discount = data.discount;
+            product.price = data.price;
+            product.quantity = data.quantity;
+            await product.save();
+
+            let productImages = new ProductImage()
+            await data.path.moveToDisk(('uploads'), {
+                name: `${Date.now()}-${data.path.clientName}`,
+
+            })
+            productImages.productId = product.id;
+            productImages.path = JSON.stringify(data.path.fileName);
+            await productImages.save()
+            return response.send(Response({ message: 'Product is successfully added.', product, productImages }))
         } catch (error) {
+            console.log(error)
             return response.status(400).send(error)
         }
     }
@@ -24,9 +45,8 @@ export default class ProductsController {
                     category: product.category.name,
                     description: product.description,
                     story: product.story,
-                    images: product.images,
-                    size: product.size,
-                    color: product.color,
+                    size: product.sizes,
+                    color: product.colors,
                     discount: product.discount,
                     price: product.price,
                     quantity: product.quantity,
@@ -34,6 +54,7 @@ export default class ProductsController {
                     updated_at: product.updatedAt
                 }
             })
+
             return response.send(Response(data))
         } catch (error) {
 
@@ -53,7 +74,7 @@ export default class ProductsController {
             const product = await Product.findOrFail(params.id)
             const data = await request.validate(ProductValidator)
             await product.merge(data).save()
-            return response.send(Response({ message: 'Product updated successfully' }))
+            return response.send(Response({ message: 'Success', product }))
         } catch (error) {
 
             return response.status(400).send(error)
@@ -64,7 +85,7 @@ export default class ProductsController {
         try {
             const product = await Product.findOrFail(params.id)
             await product.delete()
-            return response.send(Response({ message: 'Product Deleted Successfully' }))
+            return response.send(Response({ message: 'Success', product }))
         } catch (error) {
 
             return response.status(400).send(error)
@@ -88,5 +109,4 @@ export default class ProductsController {
             return response.status(400).send(error)
         }
     }
-
 }

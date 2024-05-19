@@ -37,6 +37,7 @@ Route.get('health', async ({ response }) => {
 
 Route.group(() => {
   //auth 
+  Route.get('/users', 'AuthController.index')
   Route.put('/users/:id', 'AuthController.update')
   Route.delete('/users/:id', 'AuthController.destroy')
   // Categories
@@ -53,7 +54,6 @@ Route.group(() => {
   Route.get('/reviews', 'ReviewsController.index')
   Route.put('/reviews/:id', 'ReviewsController.update')
   Route.delete('/reviews/:id', 'ReviewsController.destroy')
-
 }).prefix('api').middleware(['auth'])
 
 //Authentication Endpoints
