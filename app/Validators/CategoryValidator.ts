@@ -29,9 +29,9 @@ export default class CategoryValidator {
 
       rules.required(),
     ]),
-    slug: schema.string([
-      rules.required()
-    ])
+    // slug: schema.string([
+    //   rules.required()
+    // ])
   })
 
   /**

@@ -7,7 +7,7 @@ export default class Review extends BaseModel {
   public id: number
 
   @column()
-  public product_id: number
+  public productId: number
   @column()
   public rating: string
   @column()

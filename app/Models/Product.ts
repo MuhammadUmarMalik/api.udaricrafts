@@ -14,22 +14,27 @@ export default class Product extends BaseModel {
 
   @column()
   public name: string
+
   @column()
   public description: string
+
   @column()
   public story: string
-  @column()
-  public images: string
+
   @column()
   public discount: number
+
   @column()
   public price: number
+
   @column()
   public quantity: number
+
   @column()
-  public size: string
+  public sizes: string
+
   @column()
-  public color: string
+  public colors: string
 
 
   @column.dateTime({ autoCreate: true })

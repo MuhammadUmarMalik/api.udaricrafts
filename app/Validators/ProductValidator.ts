@@ -4,25 +4,6 @@ import type { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
 export default class ProductValidator {
   constructor(protected ctx: HttpContextContract) { }
 
-  /*
-   * Define schema to validate the "shape", "type", "formatting" and "integrity" of data.
-   *
-   * For example:
-   * 1. The username must be of data type string. But then also, it should
-   *    not contain special characters or numbers.
-   *    
-   *     schema.string({}, [ rules.alpha() ])
-   *    
-   *
-   * 2. The email must be of data type string, formatted as a valid
-   *    email. But also, not used by any other user.
-   *    
-   *     schema.string({}, [
-   *       rules.email(),
-   *       rules.unique({ table: 'users', column: 'email' }),
-   *     ])
-   *    
-   */
   public schema = schema.create({
     name: schema.string([
       rules.required(),
@@ -30,12 +11,15 @@ export default class ProductValidator {
     category_id: schema.number([rules.required()]),
     description: schema.string([rules.required()]),
     story: schema.string([rules.required()]),
-    images: schema.string([rules.required()]),
-    size: schema.string([rules.required()]),
-    color: schema.string([rules.required()]),
+    sizes: schema.string.optional(),
+    colors: schema.string.optional(),
     discount: schema.number([rules.required()]),
     price: schema.number([rules.required()]),
     quantity: schema.number([rules.required()]),
+    path: schema.file({
+      size: '5mb',
+      extnames: ['jpg', 'png', 'jpeg']
+    })
 
   })
 

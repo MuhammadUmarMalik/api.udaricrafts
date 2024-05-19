@@ -8,7 +8,7 @@ export default class ReviewsController {
         try {
             const review = await request.validate(ReviewValidator)
             await Review.create(review)
-            return response.send(Response({ message: 'Review is successfully added.' }))
+            return response.send(Response({ message: 'success', review }))
         } catch (error) {
             return response.status(400).send(error)
         }
@@ -28,7 +28,7 @@ export default class ReviewsController {
             const review = await Review.findOrFail(params.id)
             const data = await request.validate(ReviewValidator)
             await review.merge(data).save()
-            return response.send(Response({ message: 'Review updated successfully' }))
+            return response.send(Response({ message: 'success', review }))
         } catch (error) {
             console.log(error)
             return response.status(400).send(error)
@@ -39,7 +39,7 @@ export default class ReviewsController {
         try {
             const review = await Review.findOrFail(params.id)
             await review.delete()
-            return response.send(Response({ message: 'Review Deleted Successfully' }))
+            return response.send(Response({ message: 'Success', review }))
         } catch (error) {
             return response.status(400).send(error)
         }

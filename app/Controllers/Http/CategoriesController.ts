@@ -8,7 +8,7 @@ export default class CategoriesController {
         try {
             const category = await request.validate(CategoryValidator)
             await Category.create(category)
-            return response.send(Response({ message: 'Ctaegory is successfully added.' }))
+            return response.send(Response({ message: 'Success', category }))
         } catch (error) { 
             return response.status(400).send(error)
         }
@@ -28,7 +28,7 @@ export default class CategoriesController {
             const category = await Category.findOrFail(params.id)
             const data = await request.validate(CategoryValidator)
             await category.merge(data).save()
-            return response.send(Response({ message: 'Category updated successfully' }))
+            return response.send(Response({ message: 'Success', category }))
         } catch (error) {
             return response.status(400).send(error)
         }
@@ -38,7 +38,7 @@ export default class CategoriesController {
         try {
             const category = await Category.findOrFail(params.id)
             await category.delete()
-            return response.send(Response({ message: 'Category Deleted Successfully' }))
+            return response.send(Response({ message: 'Success', category }))
         } catch (error) {
             return response.status(400).send(error)
         }
