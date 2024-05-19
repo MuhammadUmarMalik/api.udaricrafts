@@ -16,10 +16,6 @@ export default class ProductValidator {
     discount: schema.number([rules.required()]),
     price: schema.number([rules.required()]),
     quantity: schema.number([rules.required()]),
-    path: schema.file({
-      size: '5mb',
-      extnames: ['jpg', 'png', 'jpeg']
-    })
 
   })
 

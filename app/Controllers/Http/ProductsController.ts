@@ -3,6 +3,7 @@ import Product from 'App/Models/Product';
 import { Response } from 'App/Utils/ApiUtil';
 import ProductValidator from 'App/Validators/ProductValidator';
 import { PaginationUtil } from 'App/Utils/PaginationUtil';
+import Application from '@ioc:Adonis/Core/Application';
 import ProductImage from 'App/Models/ProductImage';
 export default class ProductsController {
     public async store({ request, response }: HttpContextContract) {
@@ -19,14 +20,15 @@ export default class ProductsController {
             product.price = data.price;
             product.quantity = data.quantity;
             await product.save();
-
+            const images = request.files('path')
+            for (let image of images) {
+                await image.move(Application.tmpPath('uploads'), {
+                    name: `${Date.now()}-${image.clientName}`,
+                })
+            }
             let productImages = new ProductImage()
-            await data.path.moveToDisk(('uploads'), {
-                name: `${Date.now()}-${data.path.clientName}`,
-
-            })
             productImages.productId = product.id;
-            productImages.path = JSON.stringify(data.path.fileName);
+            productImages.path = JSON.stringify(images);
             await productImages.save()
             return response.send(Response({ message: 'Product is successfully added.', product, productImages }))
         } catch (error) {
@@ -109,4 +111,5 @@ export default class ProductsController {
             return response.status(400).send(error)
         }
     }
+
 }
