@@ -3,6 +3,8 @@ import { Response } from 'App/Utils/ApiUtil';
 import { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
 import User from 'App/Models/User'
 import Hash from '@ioc:Adonis/Core/Hash'
+
+
 export default class AuthController {
     public async register({ auth, request, response }: HttpContextContract) {
         const { name, email, password, role } = request.only(['name', 'email', 'password', 'role'])
@@ -15,6 +17,7 @@ export default class AuthController {
         const token = await auth.use('api').generate(user)
         return response.send(Response('User Register Successfully', { user, token }))
     }
+
     public async login({ request, response, auth }: HttpContextContract) {
         const email = request.input('email')
         const password = request.input('password')
@@ -30,7 +33,8 @@ export default class AuthController {
         } catch (error) {
             return response.status(500).json({ error: { message: 'Internal server error' } })
         }
-  }
+    }
+
     public async getAllExceptCurrent({ auth, response }: HttpContextContract) {
         try {
             const currentUser = auth.user
@@ -46,6 +50,8 @@ export default class AuthController {
 
         }
     }
+
+
     public async update({ params, request, response }: HttpContextContract) {
         const user = await User.find(params.id)
         if (!user) {
@@ -59,6 +65,7 @@ export default class AuthController {
         await user.save()
         return response.send(Response('User Updated Successfully', user))
     }
+
     public async destroy({ params, response }: HttpContextContract) {
         const user = await User.find(params.id)
         if (!user) {

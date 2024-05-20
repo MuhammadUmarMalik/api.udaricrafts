@@ -35,6 +35,7 @@ export default class ProductsController {
             return response.status(400).send(error)
         }
     }
+
     public async index({ response }: HttpContextContract) {
         try {
             const products = await Product.query().preload('category')
@@ -54,7 +55,8 @@ export default class ProductsController {
                     updated_at: product.updatedAt
                 }
             })
-            return response.send(Response('Get All Products Successfully', data))
+
+            return response.send(Response('Get All ProductSuccessfully', data))
         } catch (error) {
 
             return response.status(400).send(error)
@@ -79,6 +81,7 @@ export default class ProductsController {
             return response.status(400).send(error)
         }
     }
+
     public async destroy({ params, response }: HttpContextContract) {
         try {
             const product = await Product.findOrFail(params.id)
@@ -89,6 +92,8 @@ export default class ProductsController {
             return response.status(400).send(error)
         }
     }
+
+
     public async pagination({ request, response }: HttpContextContract) {
         try {
             const { page, page_size, filter, sort } = request.body();
@@ -105,4 +110,5 @@ export default class ProductsController {
             return response.status(400).send(error)
         }
     }
+
 }
