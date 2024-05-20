@@ -45,7 +45,22 @@ export default class AuthController {
         }
     }
 
+    public async getAllExceptCurrent({ auth, response }: HttpContextContract) {
+        try {
+            const currentUser = auth.user
+            if (!currentUser) {
+                return {
+                    message: 'User not authenticated',
+                }
+            }
+            const users = await User.query().whereNot('id', currentUser.id)
+            return response.ok({ message: 'Success', users })
+        } catch (error) {
+            // Handle errors
+            return response.status(500).json({ error: { message: 'Internal server error' } })
 
+        }
+    }
 
 
     public async update({ params, request, response }: HttpContextContract) {
