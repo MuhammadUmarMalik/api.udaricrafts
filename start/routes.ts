@@ -37,6 +37,7 @@ Route.get('health', async ({ response }) => {
 
 Route.group(() => {
   //auth 
+  Route.get('/users/exclude-current', 'AuthController.getAllExceptCurrent')
   Route.get('/users', 'AuthController.index')
   Route.put('/users/:id', 'AuthController.update')
   Route.delete('/users/:id', 'AuthController.destroy')
