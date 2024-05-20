@@ -1,8 +1,8 @@
 import { schema, rules, CustomMessages } from '@ioc:Adonis/Core/Validator'
 import type { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
 
-export default class ReviewValidator {
-  constructor(protected ctx: HttpContextContract) {}
+export default class ComplaintValidator {
+  constructor(protected ctx: HttpContextContract) { }
 
   /*
    * Define schema to validate the "shape", "type", "formatting" and "integrity" of data.
@@ -24,15 +24,11 @@ export default class ReviewValidator {
    *    ```
    */
   public schema = schema.create({
-
-    rating: schema.string([rules.required()]),
-    description: schema.string([rules.required()]),
     name: schema.string([rules.required()]),
-    email: schema.string([rules.email()]),
-    status: schema.string([rules.required()]),
-    product_id: schema.number([rules.required()]),
+    email: schema.string([rules.required()]),
+    phone: schema.string([rules.required()]),
+    description: schema.string([rules.required()]),
   })
-
 
   /**
    * Custom messages for validation failures. You can make use of dot notation `(.)`
@@ -46,11 +42,9 @@ export default class ReviewValidator {
    *
    */
   public messages: CustomMessages = {
-    'product_id.required': 'The product_id cannot be empty.',
-    'rating.required': 'The rating cannot be empty.',
-    'description.required': 'The description cannot be empty.',
     'name.required': 'The name cannot be empty.',
-    'email.email': 'The email cannot be empty.',
-    'status.required': 'The status cannot be empty.',
+    'email.required': 'The email cannot be empty.',
+    'phone.required': 'The phone cannot be empty.',
+    'description.required': 'The description cannot be empty.',
   }
 }

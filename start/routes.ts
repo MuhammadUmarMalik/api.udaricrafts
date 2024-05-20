@@ -34,7 +34,6 @@ Route.get('health', async ({ response }) => {
 })
 
 //admin endpoints 
-
 Route.group(() => {
   //auth 
   Route.get('/users/exclude-current', 'AuthController.getAllExceptCurrent')
@@ -55,6 +54,14 @@ Route.group(() => {
   Route.get('/reviews', 'ReviewsController.index')
   Route.put('/reviews/:id', 'ReviewsController.update')
   Route.delete('/reviews/:id', 'ReviewsController.destroy')
+  // Banners
+  Route.post('/banners', 'BannersController.store')
+  Route.get('/banners', 'BannersController.index')
+  Route.put('/banners/:id', 'BannersController.update')
+  Route.delete('/banners/:id', 'BannersController.destroy')
+  // Complaints
+  Route.put('/complaints/:id', 'ComplaintsController.update')
+  Route.post("/complaints/pagination", "ComplaintsController.pagination")
 }).prefix('api').middleware(['auth'])
 
 //Authentication Endpoints
@@ -63,10 +70,18 @@ Route.post('/login', 'AuthController.login')
 
 // Categories endpoint for public user
 Route.get('/categories', 'CategoriesController.index')
+
 // Products endpoint for public user
 Route.get('/products/:id', 'ProductsController.show')
 Route.post("/products/pagination", "ProductsController.pagination")
+
 //review endpoint for public user
 Route.post('/reviews', 'ReviewsController.store')
 Route.get('/reviews', 'ReviewsController.index')
+
+// Complaints endpoint for public user
+Route.post('/complaints', 'ComplaintsController.store')
+
+// Banners endpoint for public user
+Route.get('/banners', 'BannersController.show')
 
