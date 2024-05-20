@@ -5,6 +5,7 @@ import ProductValidator from 'App/Validators/ProductValidator';
 import { PaginationUtil } from 'App/Utils/PaginationUtil';
 import Application from '@ioc:Adonis/Core/Application';
 import ProductImage from 'App/Models/ProductImage';
+import fs from 'fs/promises'
 export default class ProductsController {
     public async store({ request, response }: HttpContextContract) {
         try {
@@ -21,15 +22,19 @@ export default class ProductsController {
             product.quantity = data.quantity;
             await product.save();
             const images = request.files('path')
+            let productImages = []
             for (let image of images) {
-                await image.move(Application.tmpPath('uploads'), {
+                await image.move(Application.tmpPath("uploads"), {
                     name: `${Date.now()}-${image.clientName}`,
-                })
+                });
+
+                let productImage = new ProductImage();
+                productImage.productId = product.id;
+                productImage.path = `${image.fileName}`;
+                await productImage.save();
+
+                productImages.push(productImage);
             }
-            let productImages = new ProductImage()
-            productImages.productId = product.id;
-            productImages.path = JSON.stringify(images);
-            await productImages.save()
             return response.send(Response('Product Created Successfully', { product, productImages }))
         } catch (error) {
             return response.status(400).send(error)
@@ -72,8 +77,24 @@ export default class ProductsController {
         try {
             const product = await Product.findOrFail(params.id)
             const data = await request.validate(ProductValidator)
-            await product.merge(data).save()
-            return response.send(Response('Product Updated Successfully', product))
+            await product.merge({
+                name: data.name,
+                description: data.description,
+                price: data.price,
+            }).save()
+            const image = request.file("path")
+            let productImages = new ProductImage()
+            if (image) {
+                await image.move(Application.tmpPath('uploads'), {
+                    name: `${Date.now()}-${image.clientName}`
+                })
+                const previousImage = Application.tmpPath(`uploads/${image.fileName}`)
+                await fs.unlink(previousImage)
+                await productImages.merge({
+                    path: image.fileName
+                })
+            }
+            return response.send(Response('Product Updated Successfully', { product, productImages }))
         } catch (error) {
 
             return response.status(400).send(error)
@@ -102,6 +123,18 @@ export default class ProductsController {
             const paginatedData = await PaginationUtil(query, paginationOptions, response);
             return response.json(paginatedData);
         } catch (error) {
+            return response.status(400).send(error)
+        }
+    }
+    public async deleteImage({ params, response }: HttpContextContract) {
+        try {
+            const productImage = await ProductImage.findOrFail(params.id)
+            const image = Application.tmpPath(`uploads/${productImage.path}`)
+            await fs.unlink(image)
+            await productImage.delete()
+            return response.send(Response('Product Image Deleted Successfully', productImage))
+        } catch (error) {
+            console.log(error)
             return response.status(400).send(error)
         }
     }

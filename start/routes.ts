@@ -50,6 +50,7 @@ Route.group(() => {
   Route.get('/products', 'ProductsController.index')
   Route.put('/products/:id', 'ProductsController.update')
   Route.delete('/products/:id', 'ProductsController.destroy')
+  Route.delete('/productImages/:id', 'ProductsController.deleteImage')
   //reviews
   Route.get('/reviews', 'ReviewsController.index')
   Route.put('/reviews/:id', 'ReviewsController.update')
@@ -62,6 +63,10 @@ Route.group(() => {
   // Complaints
   Route.put('/complaints/:id', 'ComplaintsController.update')
   Route.post("/complaints/pagination", "ComplaintsController.pagination")
+  //order
+  Route.put('/admin/orders/:id/status', 'OrdersController.updateOrderStatus')
+  Route.put('/admin/orders/:id/payment-status', 'OrdersController.updatePaymentStatus')
+  Route.get('/admin/orders/:orderNumber', 'OrdersController.getOrderDetails')
 }).prefix('api').middleware(['auth'])
 
 //Authentication Endpoints
