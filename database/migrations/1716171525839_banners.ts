@@ -1,19 +1,12 @@
 import BaseSchema from '@ioc:Adonis/Lucid/Schema'
 
 export default class extends BaseSchema {
-  protected tableName = 'reviews'
+  protected tableName = 'banners'
 
-  public async up () {
+  public async up() {
     this.schema.createTable(this.tableName, (table) => {
       table.increments('id')
-      table.integer('product_id').unsigned().references('id').inTable('products').onDelete('CASCADE')
-      table.string('rating').notNullable()
-      table.string('description').notNullable()
-      table.string('name').notNullable()
-      table.string('email').notNullable()
-      table.string('status').defaultTo('pending')
-
-
+      table.text('image').notNullable()
       /**
        * Uses timestamptz for PostgreSQL and DATETIME2 for MSSQL
        */
@@ -22,7 +15,7 @@ export default class extends BaseSchema {
     })
   }
 
-  public async down () {
+  public async down() {
     this.schema.dropTable(this.tableName)
   }
 }
