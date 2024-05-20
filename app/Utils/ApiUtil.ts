@@ -1,7 +1,7 @@
-export function Response(data: any) {
+export function Response(message, data: any) {
     return {
-        status: 200,
-        count: Array.isArray(data) ? data.length : 1,
+        success: true,
+        message: message,
         data: data
     }
 }

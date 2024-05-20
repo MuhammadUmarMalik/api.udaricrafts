@@ -16,7 +16,6 @@ export default class ProductValidator {
     discount: schema.number([rules.required()]),
     price: schema.number([rules.required()]),
     quantity: schema.number([rules.required()]),
-
   })
 
   /**

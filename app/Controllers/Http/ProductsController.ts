@@ -30,9 +30,8 @@ export default class ProductsController {
             productImages.productId = product.id;
             productImages.path = JSON.stringify(images);
             await productImages.save()
-            return response.send(Response({ message: 'Product is successfully added.', product, productImages }))
+            return response.send(Response('Product Created Successfully', { product, productImages }))
         } catch (error) {
-            console.log(error)
             return response.status(400).send(error)
         }
     }
@@ -57,7 +56,7 @@ export default class ProductsController {
                 }
             })
 
-            return response.send(Response(data))
+            return response.send(Response('Get All ProductSuccessfully', data))
         } catch (error) {
 
             return response.status(400).send(error)
@@ -66,7 +65,7 @@ export default class ProductsController {
     public async show({ params, response }: HttpContextContract) {
         try {
             const product = await Product.findOrFail(params.id)
-            return response.send(product);
+            return response.send(Response('Get Specified Product Successfully', product))
         } catch (error) {
             return response.status(400).send(error)
         }
@@ -76,7 +75,7 @@ export default class ProductsController {
             const product = await Product.findOrFail(params.id)
             const data = await request.validate(ProductValidator)
             await product.merge(data).save()
-            return response.send(Response({ message: 'Success', product }))
+            return response.send(Response('Product Updated Successfully', product))
         } catch (error) {
 
             return response.status(400).send(error)
@@ -87,7 +86,7 @@ export default class ProductsController {
         try {
             const product = await Product.findOrFail(params.id)
             await product.delete()
-            return response.send(Response({ message: 'Success', product }))
+            return response.send(Response('Product Deleted Successfully', product))
         } catch (error) {
 
             return response.status(400).send(error)
