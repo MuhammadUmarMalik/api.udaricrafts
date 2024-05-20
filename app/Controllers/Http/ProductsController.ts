@@ -26,7 +26,7 @@ export default class ProductsController {
       const images = request.files("images");
       
       for (let image of images) {
-        await image.move(Application.makePath("uploads"), {
+        await image.move(Application.tmpPath("uploads"), {
           name: `${Date.now()}-${image.clientName}`,
         });
 
