@@ -29,7 +29,7 @@ export default class ReviewValidator {
     description: schema.string([rules.required()]),
     name: schema.string([rules.required()]),
     email: schema.string([rules.email()]),
-    status: schema.string([rules.required()]),
+    status: schema.boolean([rules.required()]),
     product_id: schema.number([rules.required()]),
   })
 
@@ -51,6 +51,6 @@ export default class ReviewValidator {
     'description.required': 'The description cannot be empty.',
     'name.required': 'The name cannot be empty.',
     'email.email': 'The email cannot be empty.',
-    'status.required': 'The status cannot be empty.',
+    'status.required': 'The email cannot be empty.',
   }
 }

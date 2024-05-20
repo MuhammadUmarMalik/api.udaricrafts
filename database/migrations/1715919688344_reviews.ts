@@ -11,7 +11,7 @@ export default class extends BaseSchema {
       table.string('description').notNullable()
       table.string('name').notNullable()
       table.string('email').notNullable()
-      table.string('status').defaultTo('pending')
+      table.boolean('status').notNullable()
 
 
       /**
