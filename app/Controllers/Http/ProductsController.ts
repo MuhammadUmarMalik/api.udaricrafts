@@ -5,7 +5,7 @@ import ProductValidator from "App/Validators/ProductValidator";
 import { PaginationUtil } from "App/Utils/PaginationUtil";
 import Application from "@ioc:Adonis/Core/Application";
 import ProductImage from "App/Models/ProductImage";
-
+import fs from 'fs/promises'
 export default class ProductsController {
   public async store({ request, response }: HttpContextContract) {
     try {
@@ -71,16 +71,16 @@ export default class ProductsController {
     }
   }
 
-  public async show({ params, response }: HttpContextContract) {
-    try {
-      const product = await Product.findOrFail(params.id);
-      return response.send(
-        Response("Get Specified Product Successfully", product)
-      );
-    } catch (error) {
-      return response.status(400).send(error);
+    public async show({ params, response }: HttpContextContract) {
+        try {
+            const product = await Product.findOrFail(params.id);
+            return response.send(
+                Response("Get Specified Product Successfully", product)
+            );
+        } catch (error) {
+            return response.status(400).send(error);
+        }
     }
-
     public async update({ request, params, response }: HttpContextContract) {
         try {
             const product = await Product.findOrFail(params.id)
@@ -104,9 +104,9 @@ export default class ProductsController {
             }
             return response.send(Response('Product Updated Successfully', { product, productImages }))
         } catch (error) {
-        return response.send(error);
-  }
-
+            return response.send(error);
+        }
+    }
   public async destroy({ params, response }: HttpContextContract) {
     try {
       const product = await Product.findOrFail(params.id);
@@ -117,26 +117,26 @@ export default class ProductsController {
     }
   }
 
-  public async pagination({ request, response }: HttpContextContract) {
-    try {
-      const { page, page_size, filter, sort } = request.body();
-      const query = Product.query();
-      const paginationOptions = {
-        page: page,
-        pageSize: page_size,
-        filter,
-        sort,
-      };
-      const paginatedData = await PaginationUtil(
-        query,
-        paginationOptions,
-        response
-      );
-      return response.json(paginatedData);
-    } catch (error) {
-      return response.status(400).send(error);
+    public async pagination({ request, response }: HttpContextContract) {
+        try {
+            const { page, page_size, filter, sort } = request.body();
+            const query = Product.query();
+            const paginationOptions = {
+                page: page,
+                pageSize: page_size,
+                filter,
+                sort,
+            };
+            const paginatedData = await PaginationUtil(
+                query,
+                paginationOptions,
+                response
+            );
+            return response.json(paginatedData);
+        } catch (error) {
+            return response.status(400).send(error);
+        }
     }
-
     public async deleteImage({ params, response }: HttpContextContract) {
         try {
             const productImage = await ProductImage.findOrFail(params.id)
@@ -151,6 +151,4 @@ export default class ProductsController {
     }
 }
 
-  }
-}
 
