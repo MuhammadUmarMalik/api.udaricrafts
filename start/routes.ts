@@ -37,7 +37,6 @@ Route.get('health', async ({ response }) => {
 Route.group(() => {
   //auth 
   Route.get('/users/exclude-current', 'AuthController.getAllExceptCurrent')
-  Route.get('/users', 'AuthController.index')
   Route.put('/users/:id', 'AuthController.update')
   Route.delete('/users/:id', 'AuthController.destroy')
   // Categories
@@ -63,6 +62,7 @@ Route.group(() => {
   // Complaints
   Route.put('/complaints/:id', 'ComplaintsController.update')
   Route.post("/complaints/pagination", "ComplaintsController.pagination")
+  Route.post("/complaints/send-mail", "ComplaintsController.sendEmail")
   //order
   Route.put('/admin/orders/:id/status', 'OrdersController.updateOrderStatus')
   Route.put('/admin/orders/:id/payment-status', 'OrdersController.updatePaymentStatus')

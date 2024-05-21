@@ -132,7 +132,7 @@ export default class ProductsController {
                 paginationOptions,
                 response
             );
-            return response.json(paginatedData);
+          return response.send(Response('Get All Product with Pagination', paginatedData))
         } catch (error) {
             return response.status(400).send(error);
         }
