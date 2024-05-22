@@ -21,6 +21,20 @@ export default class OrderController {
 
         order.status = status
         await order.save()
+        await Mail.send((message) => {
+            message
+                .to(order.email)
+                .from('no-reply@yourstore.com')
+                .subject('Order Confirmation')
+                .html(`
+            <h1>Order Confirmation</h1>
+            <p>Dear ${order.name},</p>
+            <p>Thank you for your order. Your order number is <br> ${order.order_number}.</p>
+            <p>We will notify you once your order is ${order.status}.</p>
+            <p>Thank you for shopping with us!</p>
+            <h3>Regards: Udari Crafts</h3>
+          `)
+        })
 
         return response.status(200).json({ message: 'Order status updated successfully', order })
     }
@@ -97,7 +111,7 @@ export default class OrderController {
                 address,
                 order_number: orderNumber,
                 total: totalPrice,
-
+                status: 'pending'
             })
             await PaymentDetail.create({
                 orderId: newOrder.id,
@@ -125,7 +139,7 @@ export default class OrderController {
             <h1>Order Confirmation</h1>
             <p>Dear ${name},</p>
             <p>Thank you for your order. Your order number is <br> ${orderNumber}.</p>
-            <p>We will notify you once your order is shipped.</p>
+            <p>We will notify you once your order is  ${newOrder.status}.</p>
             <p>Thank you for shopping with us!</p>
             <h3>Regards: Udari Crafts</h3>
           `)
