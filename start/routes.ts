@@ -65,8 +65,8 @@ Route.group(() => {
   Route.post("/complaints/send-mail", "ComplaintsController.sendEmail")
   //order
   Route.put('/admin/orders/:id', 'OrdersController.updateOrderStatus')
-  Route.put('/admin/orders/:id/payment-status', 'OrdersController.updatePaymentStatus')
-  Route.get('/admin/orders/:orderNumber', 'OrdersController.getOrderDetails')
+  Route.put('/admin/orders/:id/:payment-status', 'OrdersController.updatePaymentStatus')
+  Route.get('/admin/orders/:order_number', 'OrdersController.getOrderDetails')
 
   //Dashboard Endpoints
   Route.get('/products/current-month', 'AdminDashboardsController.totalProductsCurrentMonth')
