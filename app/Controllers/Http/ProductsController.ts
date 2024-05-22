@@ -21,10 +21,8 @@ export default class ProductsController {
       product.price = data.price;
       product.quantity = data.quantity;
       await product.save();
-
-      let productImages = [];
-      const images = request.files("images");
-      
+      const images = request.files('path')
+      let productImages = [] 
       for (let image of images) {
         await image.move(Application.tmpPath("uploads"), {
           name: `${Date.now()}-${image.clientName}`,

@@ -67,6 +67,16 @@ Route.group(() => {
   Route.put('/admin/orders/:id/status', 'OrdersController.updateOrderStatus')
   Route.put('/admin/orders/:id/payment-status', 'OrdersController.updatePaymentStatus')
   Route.get('/admin/orders/:orderNumber', 'OrdersController.getOrderDetails')
+
+  //Dashboard Endpoints
+  Route.get('/products/current-month', 'AdminDashboardsController.totalProductsCurrentMonth')
+  Route.get('/products/current-year', 'AdminDashboardsController.totalProductsCurrentYear')
+  Route.get('/orders/current-month', 'AdminDashboardsController.totalOrdersCurrentMonth')
+  Route.get('/orders/current-year', 'AdminDashboardsController.totalOrdersCurrentYear')
+  Route.get('/earnings/current-month', 'AdminDashboardsController.totalEarningsCurrentMonth')
+  Route.get('/earnings/current-year', 'AdminDashboardsController.totalEarningsCurrentYear')
+  Route.post('/verify-password', 'AdminDashboardsController.verifyPassword')
+  Route.post('/forgot-password', 'AdminDashboardsController.forgotPassword')
 }).prefix('api').middleware(['auth'])
 
 //Authentication Endpoints
@@ -90,3 +100,5 @@ Route.post('/complaints', 'ComplaintsController.store')
 // Banners endpoint for public user
 Route.get('/banners', 'BannersController.show')
 
+// Create order endpoint for public user
+Route.post('/orders', 'OrdersController.store')

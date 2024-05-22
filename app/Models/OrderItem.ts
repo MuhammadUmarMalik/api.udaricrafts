@@ -15,6 +15,7 @@ export default class OrderItem extends BaseModel {
 
   @column()
   public quantity: number
+
   @column.dateTime({ autoCreate: true })
   public createdAt: DateTime
 
