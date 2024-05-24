@@ -63,18 +63,13 @@ Route.group(() => {
   Route.put('/complaints/:id', 'ComplaintsController.update')
   Route.post("/complaints/pagination", "ComplaintsController.pagination")
   Route.post("/complaints/send-mail", "ComplaintsController.sendEmail")
+  Route.get('/find-complaints', 'ComplaintsController.search')
   //order
   Route.put('/admin/orders/:id', 'OrdersController.updateOrderStatus')
   Route.put('/admin/orders/:id/:payment-status', 'OrdersController.updatePaymentStatus')
-  Route.get('/admin/orders/:order_number', 'OrdersController.getOrderDetails')
-
+  Route.post("/orders/pagination", "OrdersController.pagination")
   //Dashboard Endpoints
-  Route.get('/products/current-month', 'AdminDashboardsController.totalProductsCurrentMonth')
-  Route.get('/products/current-year', 'AdminDashboardsController.totalProductsCurrentYear')
-  Route.get('/orders/current-month', 'AdminDashboardsController.totalOrdersCurrentMonth')
-  Route.get('/orders/current-year', 'AdminDashboardsController.totalOrdersCurrentYear')
-  Route.get('/earnings/current-month', 'AdminDashboardsController.totalEarningsCurrentMonth')
-  Route.get('/earnings/current-year', 'AdminDashboardsController.totalEarningsCurrentYear')
+  Route.get('/products/getStatistics', 'AdminDashboardsController.getStatistics')
   Route.post('/verify-password', 'AdminDashboardsController.verifyPassword')
   Route.post('/forgot-password', 'AdminDashboardsController.forgotPassword')
 }).prefix('api').middleware(['auth'])
@@ -102,3 +97,4 @@ Route.get('/banners', 'BannersController.show')
 
 // Create order endpoint for public user
 Route.post('/orders', 'OrdersController.store')
+Route.get('/orders/:order_number', 'OrdersController.getOrderDetails')

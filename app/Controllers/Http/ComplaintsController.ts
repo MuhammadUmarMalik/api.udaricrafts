@@ -64,4 +64,31 @@ export default class ComplaintsController {
             return response.status(500).json({ message: 'Failed to send email', error: error.message })
         }
     }
+
+    public async search({ request, response }: HttpContextContract) {
+        try {
+            const { name, date, status } = request.qs()
+
+            let complaintsQuery = Complaint.query()
+
+            if (name) {
+                complaintsQuery = complaintsQuery.where('name', 'like', `%${name}%`)
+            }
+
+            if (date) {
+                complaintsQuery = complaintsQuery.where('date', date)
+            }
+
+            if (status) {
+                complaintsQuery = complaintsQuery.where('status', status)
+            }
+
+            const complaints = await complaintsQuery.exec()
+
+            return response.send(Response('Complaints Retrieved Successfully', complaints))
+        } catch (error) {
+            console.error(error);
+            return response.status(400).send(error)
+        }
+    }
 }

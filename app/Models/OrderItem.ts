@@ -14,6 +14,9 @@ export default class OrderItem extends BaseModel {
   public productId: number
 
   @column()
+  public item_name: string
+
+  @column()
   public quantity: number
 
   @column.dateTime({ autoCreate: true })

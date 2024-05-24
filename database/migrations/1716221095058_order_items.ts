@@ -1,5 +1,4 @@
 import BaseSchema from '@ioc:Adonis/Lucid/Schema'
-
 export default class extends BaseSchema {
   protected tableName = 'order_items'
 
@@ -8,6 +7,7 @@ export default class extends BaseSchema {
       table.increments('id')
       table.integer('order_id').unsigned().references('id').inTable('orders').onDelete('CASCADE')
       table.integer('product_id').unsigned().references('id').inTable('products').onDelete('CASCADE')
+      table.string('item_name').notNullable(),
       table.integer('quantity').unsigned().notNullable()
       /**
        * Uses timestamptz for PostgreSQL and DATETIME2 for MSSQL

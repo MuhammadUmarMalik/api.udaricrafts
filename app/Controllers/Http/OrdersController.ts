@@ -5,8 +5,10 @@ import Order from 'App/Models/Order'
 import OrderItem from 'App/Models/OrderItem'
 import PaymentDetail from 'App/Models/PaymentDetail'
 import Product from 'App/Models/Product'
+import { PaginationUtil } from 'App/Utils/PaginationUtil'
 // import OrderValidator from 'App/Validators/OrderValidator'
 import { v4 as uuidv4 } from 'uuid'
+import { Response } from 'App/Utils/ApiUtil'
 
 
 export default class OrderController {
@@ -51,7 +53,7 @@ export default class OrderController {
         paymentDetail.status = status
         await paymentDetail.save()
 
-        return response.status(200).json({ message: 'Payment status updated successfully', paymentDetail })
+        return response.status(200).send(Response('Payment status updated successfully', paymentDetail))
     }
 
     public async getOrderDetails({ params, response }: HttpContextContract) {
@@ -120,12 +122,16 @@ export default class OrderController {
                 status: 'pending' // Default status
             })
             // Create order items
-            for (let product of products) {
-                await OrderItem.create({
-                    orderId: newOrder.id,
-                    productId: product.productId,
-                    quantity: product.buyingQuantity,
-                })
+            for (const product of products) {
+                const foundProduct = productList.find(p => p.id === product.productId)
+                if (foundProduct) {
+                    await OrderItem.create({
+                        orderId: newOrder.id,
+                        productId: product.productId,
+                        item_name: foundProduct.name, // Include the product name
+                        quantity: product.buyingQuantity,
+                    })
+                }
             }
 
             // Send confirmation email
@@ -144,10 +150,30 @@ export default class OrderController {
             <h3>Regards: Udari Crafts</h3>
           `)
             })
-
-            return response.status(201).json(newOrder)
+            return response.send(Response('your order ', newOrder));
         } catch (error) {
             return response.status(500).json({ message: 'An error occurred while processing your order', error: error.message })
+        }
+    }
+
+    public async pagination({ request, response }: HttpContextContract) {
+        try {
+            const { page, page_size, filter, sort } = request.body();
+            const query = Order.query();
+            const paginationOptions = {
+                page: page,
+                pageSize: page_size,
+                filter,
+                sort,
+            };
+            const paginatedData = await PaginationUtil(
+                query,
+                paginationOptions,
+                response
+            );
+            return response.send(Response('Get All Product with Pagination', paginatedData))
+        } catch (error) {
+            return response.status(400).send(error);
         }
     }
 }
