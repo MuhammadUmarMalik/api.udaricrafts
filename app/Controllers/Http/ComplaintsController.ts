@@ -2,7 +2,6 @@ import { Response } from 'App/Utils/ApiUtil';
 import type { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
 import Complaint from 'App/Models/Complaint';
 import ComplaintValidator from 'App/Validators/ComplaintValidator';
-import { PaginationUtil } from 'App/Utils/PaginationUtil';
 import Mail from '@ioc:Adonis/Addons/Mail';
 
 export default class ComplaintsController {
@@ -29,23 +28,6 @@ export default class ComplaintsController {
         }
     }
 
-    public async pagination({ request, response }: HttpContextContract) {
-        try {
-            const { page, page_size, filter, sort } = request.body();
-            const query = Complaint.query();
-            const paginationOptions = {
-                page: page,
-                pageSize: page_size,
-                filter,
-                sort,
-            };
-            const paginatedData = await PaginationUtil(query, paginationOptions, response);
-            return response.send(Response('Get All Complaints with Pagination', paginatedData))
-        } catch (error) {
-            return response.status(400).send(error)
-        }
-    }
-
     public async sendEmail({ request, response }: HttpContextContract) {
         const { to, from, subject, text } = request.only(['to', 'from', 'subject', 'text'])
 
@@ -61,34 +43,32 @@ export default class ComplaintsController {
             return response.send(Response('Email Send Successfully', { to, from, subject, text }))
         } catch (error) {
             console.error(error)
-            return response.status(500).json({ message: 'Failed to send email', error: error.message })
+            return response.status(500).send({ message: 'Failed to send email', error: error.message })
         }
     }
 
-    public async search({ request, response }: HttpContextContract) {
+    public async index({ request, response }: HttpContextContract) {
         try {
-            const { name, date, status } = request.qs()
-
-            let complaintsQuery = Complaint.query()
-
-            if (name) {
-                complaintsQuery = complaintsQuery.where('name', 'like', `%${name}%`)
-            }
-
+            const { date, name, status } = request.qs()
+            let query = Complaint.query()
             if (date) {
-                complaintsQuery = complaintsQuery.where('date', date)
+                query = query.where('created_at', date)
             }
-
+            if (name) {
+                query = query.where('name', 'like', `%${name}%`)
+            }
             if (status) {
-                complaintsQuery = complaintsQuery.where('status', status)
+                query = query.where('status', status)
             }
+            const page = request.input('page', 1)
+            const limit = request.input('limit', 10)
+            const results = await query.paginate(page, limit)
 
-            const complaints = await complaintsQuery.exec()
-
-            return response.send(Response('Complaints Retrieved Successfully', complaints))
+            return response.send(Response('Get All Complaints with Pagination', results))
         } catch (error) {
-            console.error(error);
-            return response.status(400).send(error)
+            return response.status(500).send(Response('internal server error', error))
         }
+
     }
 }
+

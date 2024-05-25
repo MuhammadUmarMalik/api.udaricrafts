@@ -5,7 +5,6 @@ import Order from 'App/Models/Order'
 import OrderItem from 'App/Models/OrderItem'
 import PaymentDetail from 'App/Models/PaymentDetail'
 import Product from 'App/Models/Product'
-import { PaginationUtil } from 'App/Utils/PaginationUtil'
 // import OrderValidator from 'App/Validators/OrderValidator'
 import { v4 as uuidv4 } from 'uuid'
 import { Response } from 'App/Utils/ApiUtil'
@@ -158,20 +157,22 @@ export default class OrderController {
 
     public async pagination({ request, response }: HttpContextContract) {
         try {
-            const { page, page_size, filter, sort } = request.body();
-            const query = Order.query();
-            const paginationOptions = {
-                page: page,
-                pageSize: page_size,
-                filter,
-                sort,
-            };
-            const paginatedData = await PaginationUtil(
-                query,
-                paginationOptions,
-                response
-            );
-            return response.send(Response('Get All Product with Pagination', paginatedData))
+            const { date, name, status } = request.qs()
+            let query = Order.query()
+            if (date) {
+                query = query.where('created_at', date)
+            }
+            if (name) {
+                query = query.where('name', 'like', `%${name}%`)
+            }
+            if (status) {
+                query = query.where('status', status)
+            }
+            const page = request.input('page', 1)
+            const limit = request.input('limit', 10)
+            const results = await query.paginate(page, limit)
+
+            return response.send(Response('Get All Product with Pagination', results))
         } catch (error) {
             return response.status(400).send(error);
         }

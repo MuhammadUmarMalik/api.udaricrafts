@@ -61,9 +61,9 @@ Route.group(() => {
   Route.delete('/banners/:id', 'BannersController.destroy')
   // Complaints
   Route.put('/complaints/:id', 'ComplaintsController.update')
-  Route.post("/complaints/pagination", "ComplaintsController.pagination")
+
   Route.post("/complaints/send-mail", "ComplaintsController.sendEmail")
-  Route.get('/find-complaints', 'ComplaintsController.search')
+  Route.get('/complaints', 'ComplaintsController.index')
   //order
   Route.put('/admin/orders/:id', 'OrdersController.updateOrderStatus')
   Route.put('/admin/orders/:id/:payment-status', 'OrdersController.updatePaymentStatus')
@@ -85,7 +85,7 @@ Route.get('/categories', 'CategoriesController.index')
 
 // Products endpoint for public user
 Route.get('/products/:id', 'ProductsController.show')
-Route.post("/products/pagination", "ProductsController.pagination")
+Route.get("/products", "ProductsController.pagination")
 
 //review endpoint for public user
 Route.post('/reviews', 'ReviewsController.store')

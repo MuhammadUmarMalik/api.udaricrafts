@@ -2,7 +2,6 @@ import type { HttpContextContract } from "@ioc:Adonis/Core/HttpContext";
 import Product from "App/Models/Product";
 import { Response } from "App/Utils/ApiUtil";
 import ProductValidator from "App/Validators/ProductValidator";
-import { PaginationUtil } from "App/Utils/PaginationUtil";
 import Application from "@ioc:Adonis/Core/Application";
 import ProductImage from "App/Models/ProductImage";
 import fs from 'fs/promises'
@@ -116,24 +115,30 @@ export default class ProductsController {
   }
 
     public async pagination({ request, response }: HttpContextContract) {
-        try {
-            const { page, page_size, filter, sort } = request.body();
-            const query = Product.query();
-            const paginationOptions = {
-                page: page,
-                pageSize: page_size,
-                filter,
-                sort,
-            };
-            const paginatedData = await PaginationUtil(
-                query,
-                paginationOptions,
-                response
-            );
-          return response.send(Response('Get All Product with Pagination', paginatedData))
-        } catch (error) {
-            return response.status(400).send(error);
+      try {
+        const { date, name, categoryID } = request.qs()
+        let query = Product.query()
+        if (date) {
+          query = query.where('created_at', date)
+          console.log('query date', query)
         }
+        if (name) {
+          query = query.where('name', 'like', `%${name}%`)
+          console.log('query name', query)
+        }
+        if (categoryID) {
+          query = query.where('category_id', categoryID)
+          console.log('query category_id', query)
+        }
+        const page = request.input('page', 1)
+        const limit = request.input('limit', 10)
+        const results = await query.paginate(page, limit)
+
+        return response.send(Response('Get All Products with Pagination', results))
+      } catch (error) {
+        console.log(error)
+        return response.status(500).send(Response('internal server error', error))
+      }
     }
     public async deleteImage({ params, response }: HttpContextContract) {
         try {
