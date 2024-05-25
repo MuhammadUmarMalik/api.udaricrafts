@@ -27,6 +27,7 @@ export default class Order extends BaseModel {
 
   @column()
   public status: string
+
   @column.dateTime({ autoCreate: true })
   public createdAt: DateTime
 

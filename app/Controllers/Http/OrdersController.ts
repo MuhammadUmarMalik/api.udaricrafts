@@ -8,7 +8,12 @@ import Product from 'App/Models/Product'
 // import OrderValidator from 'App/Validators/OrderValidator'
 import { v4 as uuidv4 } from 'uuid'
 import { Response } from 'App/Utils/ApiUtil'
+import Stripe from 'stripe'
+import Env from '@ioc:Adonis/Core/Env';
 
+const stripe = new Stripe(Env.get('STRIPE_SECRET_KEY'), {
+    apiVersion: Env.get('STRIPE_API_VERSION'),
+})
 
 export default class OrderController {
     public async updateOrderStatus({ request, params, response }: HttpContextContract) {
@@ -177,6 +182,44 @@ export default class OrderController {
             return response.status(400).send(error);
         }
     }
+
+    public async createCheckoutSession({ params, response }: HttpContextContract) {
+        try {
+            // Fetch the order and its items
+            const orderId = params.id
+            const order = await Order.query().where('id', orderId).preload('orderItems', (query) => {
+                query.preload('product')
+            }).firstOrFail()
+
+            // Prepare line items for the checkout session
+            const lineItems = order.orderItems.map((orderItem) => ({
+                price_data: {
+                    currency: 'pkr',
+                    product_data: {
+                        name: orderItem.product.name,
+                    },
+                    unit_amount: orderItem.product.price * 100, // Stripe expects the amount in cents
+                },
+                quantity: orderItem.quantity,
+            }))
+
+            const session = await stripe.checkout.sessions.create({
+                payment_method_types: ['card'],
+                line_items: lineItems,
+                mode: 'payment',
+                success_url: 'https://yourdomain.com/success',
+                cancel_url: 'https://yourdomain.com/cancel',
+            })
+
+            return response.status(201).json({
+                id: session.id,
+                url: session.url,
+            })
+        } catch (error) {
+            return response.status(500).json({ error: error.message })
+        }
+    }
 }
+
 
 

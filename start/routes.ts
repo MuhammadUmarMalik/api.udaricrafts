@@ -72,8 +72,6 @@ Route.group(() => {
   Route.get('/products/getStatistics', 'AdminDashboardsController.getStatistics')
   Route.post('/verify-password', 'AdminDashboardsController.verifyPassword')
   Route.post('/forgot-password', 'AdminDashboardsController.forgotPassword')
-  //payment gateway
-  Route.post('/payments/process', 'PaymentsController.processPayment')
 }).prefix('api').middleware(['auth'])
 
 //Authentication Endpoints
@@ -100,3 +98,4 @@ Route.get('/banners', 'BannersController.show')
 // Create order endpoint for public user
 Route.post('/orders', 'OrdersController.store')
 Route.get('/orders/:order_number', 'OrdersController.getOrderDetails')
+Route.post('/create-checkout-session/:id', 'OrdersController.createCheckoutSession') // stripe payment gateway 
