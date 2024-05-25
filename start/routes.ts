@@ -72,6 +72,8 @@ Route.group(() => {
   Route.get('/products/getStatistics', 'AdminDashboardsController.getStatistics')
   Route.post('/verify-password', 'AdminDashboardsController.verifyPassword')
   Route.post('/forgot-password', 'AdminDashboardsController.forgotPassword')
+  //payment gateway
+  Route.post('/payments/process', 'PaymentsController.processPayment')
 }).prefix('api').middleware(['auth'])
 
 //Authentication Endpoints
