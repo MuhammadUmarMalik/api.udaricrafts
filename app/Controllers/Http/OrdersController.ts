@@ -122,7 +122,7 @@ export default class OrderController {
             await PaymentDetail.create({
                 orderId: newOrder.id,
                 amount: totalPrice,
-                type: 'cash',
+                type: 'card',
                 status: 'pending' // Default status
             })
             // Create order items
@@ -183,7 +183,7 @@ export default class OrderController {
         }
     }
 
-    public async createCheckoutSession({ params, response }: HttpContextContract) {
+    public async createCheckoutSession({ request, params, response }: HttpContextContract) {
         try {
             // Fetch the order and its items
             const orderId = params.id
@@ -211,11 +211,19 @@ export default class OrderController {
                 cancel_url: 'https://yourdomain.com/cancel',
             })
 
+            // Update the payment details with the Stripe session ID
+
+            const paymentDetail = await PaymentDetail.query().where('order_id', orderId).firstOrFail()
+            paymentDetail.stripeSessionID = session.id
+            paymentDetail.status = 'paid' // Update the status if needed
+            await paymentDetail.save()
+
             return response.status(201).json({
                 id: session.id,
                 url: session.url,
             })
         } catch (error) {
+            console.log(error)
             return response.status(500).json({ error: error.message })
         }
     }

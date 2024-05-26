@@ -18,6 +18,9 @@ export default class PaymentDetail extends BaseModel {
   @column()
   public status: string
 
+  @column()
+  public stripeSessionID: string
+
   @column.dateTime({ autoCreate: true })
   public createdAt: DateTime
 

@@ -10,6 +10,7 @@ export default class extends BaseSchema {
       table.integer('amount')
       table.string('type')
       table.string('status').defaultTo('pending')
+      table.string('stripe_session_id')
       /**
        * Uses timestamptz for PostgreSQL and DATETIME2 for MSSQL
        * payment_details (order_id (FK), amount, type (cash, card), status (pending, paid), timestamps)
