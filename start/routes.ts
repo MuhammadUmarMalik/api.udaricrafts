@@ -98,4 +98,7 @@ Route.get('/banners', 'BannersController.show')
 // Create order endpoint for public user
 Route.post('/orders', 'OrdersController.store')
 Route.get('/orders/:order_number', 'OrdersController.getOrderDetails')
-Route.post('/create-checkout-session/:id', 'OrdersController.createCheckoutSession') // stripe payment gateway 
+// stripe payment gateway
+Route.post('/create-checkout-session/:id', 'OrdersController.createCheckoutSession')
+// Jazzcash  payment gateway
+Route.post('/create-jazzcash-checkout/:id', 'OrdersController.createJazzCashCheckout')

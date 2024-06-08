@@ -21,6 +21,9 @@ export default class PaymentDetail extends BaseModel {
   @column()
   public stripeSessionID: string
 
+  @column()
+  public jazzCashTransactionId: string
+
   @column.dateTime({ autoCreate: true })
   public createdAt: DateTime
 

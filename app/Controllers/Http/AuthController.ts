@@ -3,8 +3,14 @@ import { Response } from 'App/Utils/ApiUtil';
 import { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
 import User from 'App/Models/User'
 import Hash from '@ioc:Adonis/Core/Hash'
+import { AuthValidator, LoginValidator } from 'App/Validators/AuthValidator';
+
+
 export default class AuthController {
     public async register({ auth, request, response }: HttpContextContract) {
+
+        await request.validate({ schema: AuthValidator })
+
         const { name, email, password, role } = request.only(['name', 'email', 'password', 'role'])
         const user = new User()
         user.name = name
@@ -16,6 +22,7 @@ export default class AuthController {
         return response.send(Response('User Register Successfully', { user, token }))
     }
     public async login({ request, response, auth }: HttpContextContract) {
+        await request.validate({ schema: LoginValidator })
         const email = request.input('email')
         const password = request.input('password')
         try {
