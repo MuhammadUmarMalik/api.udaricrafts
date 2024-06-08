@@ -45,12 +45,12 @@ export default class ProductsController {
 
   public async index({ response }: HttpContextContract) {
     try {
-      const products = await Product.query().preload("category");
+      const products = await Product.query().preload('images');
       const data = products.map((product) => {
         return {
           id: product.id,
           name: product.name,
-          category: product.category.name,
+          category: product.categoryId,
           description: product.description,
           story: product.story,
           size: product.sizes,
@@ -58,21 +58,43 @@ export default class ProductsController {
           discount: product.discount,
           price: product.price,
           quantity: product.quantity,
+          images: product.images ? product.images.map((image) => image.path) : [],
           created_at: product.createdAt,
           updated_at: product.updatedAt,
         };
       });
       return response.send(Response("Get All Products Successfully", data));
     } catch (error) {
+      console.log(error)
       return response.status(400).send(error);
     }
   }
 
     public async show({ params, response }: HttpContextContract) {
         try {
-            const product = await Product.findOrFail(params.id);
+          const product = await Product.query()
+            .where('id', params.id)
+            .preload('images')
+            .firstOrFail();
+
+          const data = {
+            id: product.id,
+            name: product.name,
+            category: product.categoryId,
+            description: product.description,
+            story: product.story,
+            size: product.sizes,
+            color: product.colors,
+            discount: product.discount,
+            price: product.price,
+            quantity: product.quantity,
+            images: product.images ? product.images.map((image) => image.path) : [],
+            created_at: product.createdAt,
+            updated_at: product.updatedAt,
+          };
+
             return response.send(
-                Response("Get Specified Product Successfully", product)
+              Response("Get Specified Product Successfully", data)
             );
         } catch (error) {
             return response.status(400).send(error);
@@ -114,32 +136,54 @@ export default class ProductsController {
     }
   }
 
-    public async pagination({ request, response }: HttpContextContract) {
-      try {
-        const { date, name, categoryID } = request.qs()
-        let query = Product.query()
-        if (date) {
-          query = query.where('created_at', date)
-          console.log('query date', query)
-        }
-        if (name) {
-          query = query.where('name', 'like', `%${name}%`)
-          console.log('query name', query)
-        }
-        if (categoryID) {
-          query = query.where('category_id', categoryID)
-          console.log('query category_id', query)
-        }
-        const page = request.input('page', 1)
-        const limit = request.input('limit', 10)
-        const results = await query.paginate(page, limit)
 
-        return response.send(Response('Get All Products with Pagination', results))
-      } catch (error) {
-        console.log(error)
-        return response.status(500).send(Response('internal server error', error))
+
+  public async pagination({ request, response }: HttpContextContract) {
+    try {
+      const { date, name, categoryID } = request.qs()
+      let query = Product.query().preload('images')
+
+      if (date) {
+        query = query.where('created_at', date)
       }
+
+      if (name) {
+        query = query.where('name', 'like', `%${name}%`)
+      }
+
+      if (categoryID) {
+        query = query.where('category_id', categoryID)
+      }
+
+      const page = request.input('page', 1)
+      const limit = request.input('limit', 10)
+      const results = await query.paginate(page, limit)
+
+      const data = results.map((product) => {
+        return {
+          id: product.id,
+          name: product.name,
+          category: product.categoryId,
+          description: product.description,
+          story: product.story,
+          size: product.sizes,
+          color: product.colors,
+          discount: product.discount,
+          price: product.price,
+          quantity: product.quantity,
+          images: product.images ? product.images.map((image) => image.path) : [], // Include image paths
+          created_at: product.createdAt,
+          updated_at: product.updatedAt,
+        };
+      });
+
+      return response.send(Response('Get All Products with Pagination', results))
+    } catch (error) {
+      console.log(error)
+      return response.status(500).send(Response('internal server error', error))
     }
+  }
+
     public async deleteImage({ params, response }: HttpContextContract) {
         try {
             const productImage = await ProductImage.findOrFail(params.id)

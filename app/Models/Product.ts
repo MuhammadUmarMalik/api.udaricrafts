@@ -3,6 +3,7 @@ import { BaseModel, BelongsTo, HasMany, belongsTo, column, hasMany } from '@ioc:
 import Category from './Category'
 import Review from './Review'
 import OrderItem from './OrderItem'
+import ProductImage from './ProductImage'
 // import Order from './Order'
 // import Sale from './Sale'
 
@@ -52,5 +53,8 @@ export default class Product extends BaseModel {
 
   @hasMany(() => Review)
   public reviews: HasMany<typeof Review>
+
+  @hasMany(() => ProductImage)
+  public images: HasMany<typeof ProductImage>
 
 }
