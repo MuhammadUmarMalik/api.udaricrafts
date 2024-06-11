@@ -8,18 +8,22 @@ import { AuthValidator, LoginValidator } from 'App/Validators/AuthValidator';
 
 export default class AuthController {
     public async register({ auth, request, response }: HttpContextContract) {
+        try {
 
-        await request.validate({ schema: AuthValidator })
+            await request.validate({ schema: AuthValidator })
 
-        const { name, email, password, role } = request.only(['name', 'email', 'password', 'role'])
-        const user = new User()
-        user.name = name
-        user.email = email
-        user.password = password
-        user.role = role
-        await user.save()
-        const token = await auth.use('api').generate(user)
-        return response.send(Response('User Register Successfully', { user, token }))
+            const { name, email, password, role } = request.only(['name', 'email', 'password', 'role'])
+            const user = new User()
+            user.name = name
+            user.email = email
+            user.password = password
+            user.role = role
+            await user.save()
+            const token = await auth.use('api').generate(user)
+            return response.send(Response('User Register Successfully', { user, token }))
+        } catch (error) {
+            console.error(error)
+        }
     }
     public async login({ request, response, auth }: HttpContextContract) {
         await request.validate({ schema: LoginValidator })

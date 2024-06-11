@@ -72,6 +72,11 @@ Route.group(() => {
   Route.get('/products/getStatistics', 'AdminDashboardsController.getStatistics')
   Route.post('/verify-password', 'AdminDashboardsController.verifyPassword')
   Route.post('/forgot-password', 'AdminDashboardsController.forgotPassword')
+  //Notificatons
+  Route.post('/notifications', 'NotificationsController.create')
+  Route.patch('/notifications/:id/markAsRead', 'NotificationsController.markAsRead')
+  Route.patch('/notifications/markAllAsRead', 'NotificationsController.markAllAsRead')
+  Route.get('/notifications/unread', 'NotificationsController.getUnread')
 }).prefix('api').middleware(['auth'])
 
 //Authentication Endpoints
