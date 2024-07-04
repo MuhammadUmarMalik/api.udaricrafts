@@ -159,7 +159,7 @@ export default class ProductsController {
       const limit = request.input('limit', 10)
       const results = await query.paginate(page, limit)
 
-      const data = results.map((product) => {
+      results.map((product) => {
         return {
           id: product.id,
           name: product.name,
