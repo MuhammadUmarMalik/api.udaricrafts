@@ -4,6 +4,21 @@ import { endpoints } from '../../api/endpoints'
 import Card from '../../components/ui/Card'
 import Spinner from '../../components/ui/Spinner'
 import { Link } from 'react-router-dom'
+import {
+  LineChart,
+  Line,
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer
+} from 'recharts'
 
 // Icon Components
 const PackageIcon = () => (
@@ -69,18 +84,78 @@ const ArrowRightIcon = () => (
 export default function Dashboard() {
   const [stats, setStats] = useState<any>(null)
   const [loading, setLoading] = useState(true)
-  const [recentActivity] = useState([
-    { id: 1, type: 'order', message: 'New order received', description: 'Order #12345 placed by John Doe', time: '5 min ago' },
-    { id: 2, type: 'product', message: 'Product stock low', description: 'Wooden Sculpture has only 3 items left', time: '1 hour ago' },
-    { id: 3, type: 'review', message: 'New review posted', description: '5-star review on Handmade Basket', time: '2 hours ago' },
-  ])
+  const [recentActivity, setRecentActivity] = useState<any[]>([])
 
-  useEffect(() => {
+  const fetchDashboardData = () => {
     api
       .get(endpoints.admin.dashboardStats)
-      .then((r) => setStats((r.data as any).data))
+      .then((r) => {
+        const data = (r.data as any).data
+        setStats(data)
+        
+        // Build recent activity from real data
+        const activities: any[] = []
+        
+        // Add recent orders
+        if (data.recentOrders && data.recentOrders.length > 0) {
+          data.recentOrders.slice(0, 2).forEach((order: any) => {
+            activities.push({
+              id: `order-${order.id}`,
+              type: 'order',
+              message: 'New order received',
+              description: `Order #${order.order_number}`,
+              time: formatTimeAgo(order.created_at)
+            })
+          })
+        }
+        
+        // Add low stock products
+        if (data.lowStockProducts && data.lowStockProducts.length > 0) {
+          const product = data.lowStockProducts[0]
+          activities.push({
+            id: `product-${product.id}`,
+            type: 'product',
+            message: 'Product stock low',
+            description: `${product.name} has only ${product.quantity} items left`,
+            time: 'Now'
+          })
+        }
+        
+        // Add recent reviews
+        if (data.recentReviews && data.recentReviews.length > 0) {
+          const review = data.recentReviews[0]
+          activities.push({
+            id: `review-${review.id}`,
+            type: 'review',
+            message: 'New review posted',
+            description: `${review.rating}-star review by ${review.name}`,
+            time: formatTimeAgo(review.created_at)
+          })
+        }
+        
+        setRecentActivity(activities.slice(0, 3))
+      })
       .catch(() => {})
       .finally(() => setLoading(false))
+  }
+
+  const formatTimeAgo = (dateString: string) => {
+    const date = new Date(dateString)
+    const now = new Date()
+    const seconds = Math.floor((now.getTime() - date.getTime()) / 1000)
+    
+    if (seconds < 60) return 'Just now'
+    if (seconds < 3600) return `${Math.floor(seconds / 60)} min ago`
+    if (seconds < 86400) return `${Math.floor(seconds / 3600)} hours ago`
+    return `${Math.floor(seconds / 86400)} days ago`
+  }
+
+  useEffect(() => {
+    fetchDashboardData()
+    
+    // Refresh data every 30 seconds
+    const interval = setInterval(fetchDashboardData, 30000)
+    return () => clearInterval(interval)
   }, [])
 
   if (loading) {
@@ -91,6 +166,11 @@ export default function Dashboard() {
     )
   }
 
+  const formatChange = (change: string | number) => {
+    const num = Number(change)
+    return num >= 0 ? `+${num}%` : `${num}%`
+  }
+
   const statCards = [
     { 
       label: 'Total Products', 
@@ -98,9 +178,9 @@ export default function Dashboard() {
       icon: PackageIcon,
       bgColor: 'bg-blue-50',
       iconColor: 'text-blue-600',
-      changeColor: 'text-blue-600',
-      change: '+12%',
-      trending: 'up',
+      changeColor: Number(stats?.productsChange) >= 0 ? 'text-blue-600' : 'text-red-600',
+      change: formatChange(stats?.productsChange || 0),
+      trending: Number(stats?.productsChange) >= 0 ? 'up' : 'down',
       link: '/admin/products'
     },
     { 
@@ -109,9 +189,9 @@ export default function Dashboard() {
       icon: ShoppingCartIcon,
       bgColor: 'bg-emerald-50',
       iconColor: 'text-emerald-600',
-      changeColor: 'text-emerald-600',
-      change: '+8%',
-      trending: 'up',
+      changeColor: Number(stats?.ordersChange) >= 0 ? 'text-emerald-600' : 'text-red-600',
+      change: formatChange(stats?.ordersChange || 0),
+      trending: Number(stats?.ordersChange) >= 0 ? 'up' : 'down',
       link: '/admin/orders'
     },
     { 
@@ -120,20 +200,20 @@ export default function Dashboard() {
       icon: UsersIcon,
       bgColor: 'bg-purple-50',
       iconColor: 'text-purple-600',
-      changeColor: 'text-purple-600',
-      change: '+5%',
-      trending: 'up',
+      changeColor: Number(stats?.usersChange) >= 0 ? 'text-purple-600' : 'text-red-600',
+      change: formatChange(stats?.usersChange || 0),
+      trending: Number(stats?.usersChange) >= 0 ? 'up' : 'down',
       link: '/admin/users'
     },
     { 
       label: 'Total Revenue', 
-      value: `Rs ${stats?.totalRevenue || 0}`, 
+      value: `Rs ${(stats?.totalRevenue || 0).toLocaleString()}`, 
       icon: CurrencyIcon,
       bgColor: 'bg-amber-50',
       iconColor: 'text-amber-600',
-      changeColor: 'text-amber-600',
-      change: '+15%',
-      trending: 'up',
+      changeColor: Number(stats?.revenueChange) >= 0 ? 'text-amber-600' : 'text-red-600',
+      change: formatChange(stats?.revenueChange || 0),
+      trending: Number(stats?.revenueChange) >= 0 ? 'up' : 'down',
       link: '/admin/orders'
     },
   ]
@@ -307,6 +387,138 @@ export default function Dashboard() {
           </Card>
         </div>
       </div>
+
+      {/* Analytics Charts */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        {/* Revenue Trend Chart */}
+        <Card className="border-0 shadow-md">
+          <div className="border-b border-gray-100 p-6">
+            <h3 className="text-xl font-bold text-gray-900">Revenue Trend</h3>
+            <p className="mt-1 text-sm text-gray-500">Last 7 days performance</p>
+          </div>
+          <div className="p-6">
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={stats?.revenueChart || []}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                <XAxis 
+                  dataKey="date" 
+                  stroke="#9ca3af"
+                  fontSize={12}
+                  tickFormatter={(value) => {
+                    const date = new Date(value)
+                    return `${date.getMonth() + 1}/${date.getDate()}`
+                  }}
+                />
+                <YAxis 
+                  stroke="#9ca3af"
+                  fontSize={12}
+                  tickFormatter={(value) => `Rs ${(value / 1000).toFixed(0)}k`}
+                />
+                <Tooltip 
+                  contentStyle={{
+                    backgroundColor: 'white',
+                    border: '1px solid #e5e7eb',
+                    borderRadius: '8px',
+                    boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
+                  }}
+                  formatter={(value: number) => [`Rs ${value.toLocaleString()}`, 'Revenue']}
+                  labelFormatter={(label) => {
+                    const date = new Date(label)
+                    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                  }}
+                />
+                <Legend />
+                <Line 
+                  type="monotone" 
+                  dataKey="revenue" 
+                  stroke="#3b82f6" 
+                  strokeWidth={3}
+                  dot={{ fill: '#3b82f6', r: 4 }}
+                  activeDot={{ r: 6 }}
+                  name="Revenue"
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </Card>
+
+        {/* Order Status Chart */}
+        <Card className="border-0 shadow-md">
+          <div className="border-b border-gray-100 p-6">
+            <h3 className="text-xl font-bold text-gray-900">Order Status</h3>
+            <p className="mt-1 text-sm text-gray-500">Distribution by status</p>
+          </div>
+          <div className="p-6">
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie
+                  data={stats?.orderStatusChart || []}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  label={({ status, percent }: any) => `${status}: ${(percent * 100).toFixed(0)}%`}
+                  outerRadius={100}
+                  fill="#8884d8"
+                  dataKey="count"
+                  nameKey="status"
+                >
+                  {(stats?.orderStatusChart || []).map((_entry: any, index: number) => (
+                    <Cell key={`cell-${index}`} fill={['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'][index % 5]} />
+                  ))}
+                </Pie>
+                <Tooltip 
+                  contentStyle={{
+                    backgroundColor: 'white',
+                    border: '1px solid #e5e7eb',
+                    borderRadius: '8px',
+                    boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
+                  }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </Card>
+      </div>
+
+      {/* Category Distribution Chart */}
+      <Card className="border-0 shadow-md">
+        <div className="border-b border-gray-100 p-6">
+          <h3 className="text-xl font-bold text-gray-900">Products by Category</h3>
+          <p className="mt-1 text-sm text-gray-500">Category distribution</p>
+        </div>
+        <div className="p-6">
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={stats?.categoryChart || []}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+              <XAxis 
+                dataKey="category" 
+                stroke="#9ca3af"
+                fontSize={12}
+              />
+              <YAxis 
+                stroke="#9ca3af"
+                fontSize={12}
+              />
+              <Tooltip 
+                contentStyle={{
+                  backgroundColor: 'white',
+                  border: '1px solid #e5e7eb',
+                  borderRadius: '8px',
+                  boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
+                }}
+                cursor={{ fill: 'rgba(59, 130, 246, 0.1)' }}
+              />
+              <Legend />
+              <Bar 
+                dataKey="count" 
+                fill="#8b5cf6" 
+                radius={[8, 8, 0, 0]}
+                name="Products"
+              />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </Card>
     </div>
   )
 }

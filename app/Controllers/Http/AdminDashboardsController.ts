@@ -7,42 +7,157 @@ import { Response } from 'App/Utils/ApiUtil'
 export default class AdminDashboardController {
     public async getStatistics({ response }: HttpContextContract) {
         try {
-            const [productsMonth, productsYear, ordersMonth, ordersYear, earningsMonth, earningsYear] = await Promise.all([
+            // Get total counts
+            const [
+                totalProducts,
+                totalOrders,
+                totalUsers,
+                totalRevenue,
+                productsLastMonth,
+                ordersLastMonth,
+                usersLastMonth,
+                revenueLastMonth,
+                productsThisMonth,
+                ordersThisMonth,
+                usersThisMonth,
+                revenueThisMonth,
+                recentOrders,
+                lowStockProducts,
+                recentReviews,
+                last7DaysRevenue,
+                ordersByStatus,
+                productsByCategory
+            ] = await Promise.all([
+                // Total counts
+                Database.from('products').count('* as total'),
+                Database.from('orders').count('* as total'),
+                Database.from('users').count('* as total'),
+                Database.from('orders').sum('total as total'),
+                
+                // Last month data (MySQL compatible)
                 Database.from('products')
-                    .whereRaw('extract(month from created_at) = extract(month from now())')
-                    .count('* as total'),
-                Database.from('products')
-                    .whereRaw('extract(year from created_at) = extract(year from now())')
+                    .whereRaw('YEAR(created_at) = YEAR(DATE_SUB(NOW(), INTERVAL 1 MONTH))')
+                    .whereRaw('MONTH(created_at) = MONTH(DATE_SUB(NOW(), INTERVAL 1 MONTH))')
                     .count('* as total'),
                 Database.from('orders')
-                    .whereRaw('extract(month from created_at) = extract(month from now())')
+                    .whereRaw('YEAR(created_at) = YEAR(DATE_SUB(NOW(), INTERVAL 1 MONTH))')
+                    .whereRaw('MONTH(created_at) = MONTH(DATE_SUB(NOW(), INTERVAL 1 MONTH))')
+                    .count('* as total'),
+                Database.from('users')
+                    .whereRaw('YEAR(created_at) = YEAR(DATE_SUB(NOW(), INTERVAL 1 MONTH))')
+                    .whereRaw('MONTH(created_at) = MONTH(DATE_SUB(NOW(), INTERVAL 1 MONTH))')
                     .count('* as total'),
                 Database.from('orders')
-                    .whereRaw('extract(year from created_at) = extract(year from now())')
-                    .count('* as total'),
-                Database.from('orders')
-                    .whereRaw('extract(month from created_at) = extract(month from now())')
+                    .whereRaw('YEAR(created_at) = YEAR(DATE_SUB(NOW(), INTERVAL 1 MONTH))')
+                    .whereRaw('MONTH(created_at) = MONTH(DATE_SUB(NOW(), INTERVAL 1 MONTH))')
                     .sum('total as total'),
+                
+                // This month data (MySQL compatible)
+                Database.from('products')
+                    .whereRaw('YEAR(created_at) = YEAR(NOW())')
+                    .whereRaw('MONTH(created_at) = MONTH(NOW())')
+                    .count('* as total'),
                 Database.from('orders')
-                    .whereRaw('extract(year from created_at) = extract(year from now())')
-                    .sum('total as total')
+                    .whereRaw('YEAR(created_at) = YEAR(NOW())')
+                    .whereRaw('MONTH(created_at) = MONTH(NOW())')
+                    .count('* as total'),
+                Database.from('users')
+                    .whereRaw('YEAR(created_at) = YEAR(NOW())')
+                    .whereRaw('MONTH(created_at) = MONTH(NOW())')
+                    .count('* as total'),
+                Database.from('orders')
+                    .whereRaw('YEAR(created_at) = YEAR(NOW())')
+                    .whereRaw('MONTH(created_at) = MONTH(NOW())')
+                    .sum('total as total'),
+                
+                // Recent activity
+                Database.from('orders')
+                    .select('id', 'order_number', 'created_at')
+                    .orderBy('created_at', 'desc')
+                    .limit(5),
+                Database.from('products')
+                    .select('id', 'name', 'quantity')
+                    .where('quantity', '<', 10)
+                    .orderBy('quantity', 'asc')
+                    .limit(5),
+                Database.from('reviews')
+                    .select('id', 'product_id', 'name', 'rating', 'created_at')
+                    .orderBy('created_at', 'desc')
+                    .limit(5),
+                
+                // Chart data: Last 7 days revenue
+                Database.raw(`
+                    SELECT 
+                        DATE(created_at) as date,
+                        SUM(total) as revenue,
+                        COUNT(*) as orders
+                    FROM orders
+                    WHERE created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+                    GROUP BY DATE(created_at)
+                    ORDER BY date ASC
+                `),
+                
+                // Chart data: Orders by status
+                Database.from('orders')
+                    .select('status')
+                    .count('* as count')
+                    .groupBy('status'),
+                
+                // Chart data: Products by category
+                Database.raw(`
+                    SELECT 
+                        c.name as category,
+                        COUNT(p.id) as count
+                    FROM products p
+                    LEFT JOIN categories c ON p.category_id = c.id
+                    GROUP BY c.id, c.name
+                    ORDER BY count DESC
+                `)
             ])
 
-            const totalProductsCurrentMonth = productsMonth[0].total || 0
-            const totalProductsCurrentYear = productsYear[0].total || 0
-            const totalOrdersCurrentMonth = ordersMonth[0].total || 0
-            const totalOrdersCurrentYear = ordersYear[0].total || 0
-            const totalEarningsCurrentMonth = earningsMonth[0].total || 0
-            const totalEarningsCurrentYear = earningsYear[0].total || 0
+            // Calculate percentage changes
+            const calculateChange = (current: number, previous: number) => {
+                if (previous === 0) return current > 0 ? 100 : 0
+                return ((current - previous) / previous * 100).toFixed(1)
+            }
 
-            return response.send(Response("Statistics", {
-                totalProductsCurrentMonth,
-                totalProductsCurrentYear,
-                totalOrdersCurrentMonth,
-                totalOrdersCurrentYear,
-                totalEarningsCurrentMonth,
-                totalEarningsCurrentYear
-            }))
+            const stats = {
+                totalProducts: Number(totalProducts[0].total) || 0,
+                totalOrders: Number(totalOrders[0].total) || 0,
+                totalUsers: Number(totalUsers[0].total) || 0,
+                totalRevenue: Number(totalRevenue[0].total) || 0,
+                
+                productsChange: calculateChange(
+                    Number(productsThisMonth[0].total) || 0,
+                    Number(productsLastMonth[0].total) || 0
+                ),
+                ordersChange: calculateChange(
+                    Number(ordersThisMonth[0].total) || 0,
+                    Number(ordersLastMonth[0].total) || 0
+                ),
+                usersChange: calculateChange(
+                    Number(usersThisMonth[0].total) || 0,
+                    Number(usersLastMonth[0].total) || 0
+                ),
+                revenueChange: calculateChange(
+                    Number(revenueThisMonth[0].total) || 0,
+                    Number(revenueLastMonth[0].total) || 0
+                ),
+                
+                recentOrders: recentOrders,
+                lowStockProducts: lowStockProducts,
+                recentReviews: recentReviews,
+                
+                // Chart data
+                revenueChart: last7DaysRevenue[0] || [],
+                orderStatusChart: ordersByStatus.map((item: any) => ({
+                    status: item.status || 'Unknown',
+                    count: Number(item.count) || 0
+                })),
+                categoryChart: productsByCategory[0] || []
+            }
+
+            return response.send(Response("Statistics", stats))
         } catch (error) {
             console.error(error)
             return response.status(500).send({ message: 'Internal server error' })
