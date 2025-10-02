@@ -5,12 +5,12 @@ export default class extends BaseSeeder {
   public async run() {
     // Write your database queries inside the run method
     await Category.createMany([
-      { name: 'Home Decor', slug: 'Home Decor' },
-      { name: 'Wall Art', slug: 'Wall Art' },
-      { name: 'Kitchen & Dining', slug: 'kitchen & Dining' },
-      { name: 'Furniture', slug: 'Furniture' },
-      { name: 'Curtains', slug: 'Curtains' },
-      { name: 'Storage & Organization', slug: 'Storage & Organization' },
+      { name: 'Home Decor', slug: 'home-decor' },
+      { name: 'Wall Art', slug: 'wall-art' },
+      { name: 'Kitchen & Dining', slug: 'kitchen-dining' },
+      { name: 'Furniture', slug: 'furniture' },
+      { name: 'Curtains', slug: 'curtains' },
+      { name: 'Storage & Organization', slug: 'storage-organization' },
     ])
   }
 }

@@ -17,10 +17,17 @@ export default class AuthController {
             user.name = name
             user.email = email
             user.password = password
-            user.role = role
+            user.role = role || 'user'
             await user.save()
             const token = await auth.use('api').generate(user)
-            return response.send(Response('User Register Successfully', { user, token }))
+            // Return user data without password
+            const userData = {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                role: user.role,
+            }
+            return response.send(Response('User Register Successfully', { user: userData, token }))
         } catch (error) {
             console.error(error)
         }
@@ -37,7 +44,14 @@ export default class AuthController {
             const token = await auth.use('api').attempt(email, password, {
                 expiresIn: '5 days',
             })
-            return response.send(Response('User Login Successfully', { user, token }))
+            // Return user data without password
+            const userData = {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                role: user.role,
+            }
+            return response.send(Response('User Login Successfully', { user: userData, token }))
         } catch (error) {
             return response.status(500).json({ error: { message: 'Internal server error' } })
         }

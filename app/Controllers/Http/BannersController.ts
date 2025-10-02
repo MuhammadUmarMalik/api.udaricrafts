@@ -31,7 +31,23 @@ export default class DishesController {
             const data = banners.map((banner) => {
                 return {
                     id: banner.id,
-                    image: Application.tmpPath(`uploads/${banner.image}`)
+                    image: `uploads/${banner.image}`
+                }
+            })
+            return response.send(Response('Get All Banners', data))
+        } catch (error) {
+            console.log(error);
+            return response.status(400).send(error)
+        }
+    }
+
+    public async show({ response }: HttpContextContract) {
+        try {
+            const banners = await Banner.all()
+            const data = banners.map((banner) => {
+                return {
+                    id: banner.id,
+                    image: `uploads/${banner.image}`
                 }
             })
             return response.send(Response('Get All Banners', data))
