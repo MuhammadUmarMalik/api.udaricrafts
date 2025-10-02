@@ -121,7 +121,11 @@ export default function Home() {
         </div>
         {categories.length === 0 ? (
           <Card className="p-12 text-center">
-            <div className="mb-3 text-5xl">📦</div>
+            <div className="mb-4 flex justify-center">
+              <svg className="h-16 w-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+              </svg>
+            </div>
             <p className="text-gray-500">No categories available yet.</p>
           </Card>
         ) : (
@@ -129,14 +133,10 @@ export default function Home() {
             {categories.map((c) => (
               <Link key={c.id} to="/products">
                 <Card className="p-6 text-center transition-all hover:scale-105 hover:shadow-lg">
-                  <div className="mb-3 text-4xl">
-                    {c.name.toLowerCase().includes('decor') && '🏠'}
-                    {c.name.toLowerCase().includes('art') && '🎨'}
-                    {c.name.toLowerCase().includes('kitchen') && '🍽️'}
-                    {c.name.toLowerCase().includes('furniture') && '🪑'}
-                    {c.name.toLowerCase().includes('curtain') && '🪟'}
-                    {c.name.toLowerCase().includes('storage') && '📦'}
-                    {!['decor', 'art', 'kitchen', 'furniture', 'curtain', 'storage'].some(keyword => c.name.toLowerCase().includes(keyword)) && '✨'}
+                  <div className="mb-3 flex justify-center">
+                    <svg className="h-10 w-10 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                    </svg>
                   </div>
                   <h3 className="font-medium text-gray-900">{c.name}</h3>
                 </Card>
@@ -177,7 +177,12 @@ export default function Home() {
             <p className="text-sm text-gray-600">Support</p>
           </div>
           <div>
-            <div className="mb-2 text-3xl font-bold text-pink-600">⭐ 4.9</div>
+            <div className="mb-2 flex items-center justify-center gap-2 text-3xl font-bold text-pink-600">
+              <svg className="h-8 w-8" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+              </svg>
+              4.9
+            </div>
             <p className="text-sm text-gray-600">Average Rating</p>
           </div>
         </div>

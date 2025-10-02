@@ -33,7 +33,11 @@ export default function OrderStatus() {
     return (
       <div className="mx-auto max-w-2xl">
         <Card className="p-12 text-center">
-          <div className="mb-4 text-6xl">❌</div>
+          <div className="mb-4 flex justify-center">
+            <svg className="h-20 w-20 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </div>
           <h2 className="mb-2 text-2xl font-bold text-gray-900">Order not found</h2>
           <p className="mb-6 text-gray-600">Please check your order number</p>
           <Link to="/products">
@@ -55,7 +59,11 @@ export default function OrderStatus() {
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <div className="text-center">
-        <div className="mb-4 text-6xl">✅</div>
+        <div className="mb-4 flex justify-center">
+          <svg className="h-20 w-20 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
         <h2 className="text-3xl font-bold text-gray-900">Order Placed Successfully!</h2>
         <p className="mt-2 text-gray-600">Thank you for your order</p>
       </div>

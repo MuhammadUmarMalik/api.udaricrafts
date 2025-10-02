@@ -34,9 +34,13 @@ export default class Order extends BaseModel {
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   public updatedAt: DateTime
 
-  @hasMany(() => OrderItem)
+  @hasMany(() => OrderItem, {
+    foreignKey: 'orderId'
+  })
   public orderItems: HasMany<typeof OrderItem>
 
-  @hasMany(() => PaymentDetail)
+  @hasMany(() => PaymentDetail, {
+    foreignKey: 'orderId'
+  })
   public paymentDetails: HasMany<typeof PaymentDetail>
 }

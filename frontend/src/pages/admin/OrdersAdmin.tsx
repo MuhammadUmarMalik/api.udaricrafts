@@ -8,6 +8,17 @@ import Spinner from '../../components/ui/Spinner'
 export default function OrdersAdmin() {
   const [orders, setOrders] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [expandedOrders, setExpandedOrders] = useState<Set<number>>(new Set())
+
+  const toggleOrderDetails = (orderId: number) => {
+    const newExpanded = new Set(expandedOrders)
+    if (newExpanded.has(orderId)) {
+      newExpanded.delete(orderId)
+    } else {
+      newExpanded.add(orderId)
+    }
+    setExpandedOrders(newExpanded)
+  }
 
   const fetch = () => {
     setLoading(true)
@@ -66,7 +77,11 @@ export default function OrdersAdmin() {
 
       {orders.length === 0 ? (
         <Card className="p-12 text-center">
-          <div className="mb-3 text-5xl">📦</div>
+          <div className="mb-4 flex justify-center">
+            <svg className="h-16 w-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+            </svg>
+          </div>
           <h3 className="text-lg font-semibold text-gray-900">No orders yet</h3>
           <p className="text-gray-500">Orders will appear here</p>
         </Card>
@@ -134,6 +149,57 @@ export default function OrdersAdmin() {
                 <div className="mt-4 rounded-lg bg-gray-50 p-3">
                   <p className="text-sm font-medium text-gray-700">Delivery Address</p>
                   <p className="mt-1 text-sm text-gray-600">{o.address}</p>
+                </div>
+              )}
+
+              {/* Order Items Toggle Button */}
+              <button
+                onClick={() => toggleOrderDetails(o.id)}
+                className="mt-4 flex w-full items-center justify-between rounded-lg border border-gray-200 bg-gray-50 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100"
+              >
+                <span>
+                  {expandedOrders.has(o.id) ? '▼' : '▶'} Order Items
+                  {o.orderItems && ` (${o.orderItems.length})`}
+                </span>
+                <span className="text-xs text-gray-500">
+                  {expandedOrders.has(o.id) ? 'Click to hide' : 'Click to view'}
+                </span>
+              </button>
+
+              {/* Order Items List (Expanded) */}
+              {expandedOrders.has(o.id) && o.orderItems && o.orderItems.length > 0 && (
+                <div className="mt-2 overflow-hidden rounded-lg border border-gray-200">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                          Product
+                        </th>
+                        <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
+                          Quantity
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200 bg-white">
+                      {o.orderItems.map((item: any, idx: number) => (
+                        <tr key={idx}>
+                          <td className="px-4 py-3 text-sm text-gray-900">
+                            {item.item_name || item.product?.name || 'Unknown Product'}
+                          </td>
+                          <td className="px-4 py-3 text-right text-sm text-gray-900">
+                            {item.quantity}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {/* No Order Items Message */}
+              {expandedOrders.has(o.id) && (!o.orderItems || o.orderItems.length === 0) && (
+                <div className="mt-2 rounded-lg border border-gray-200 bg-gray-50 p-4 text-center text-sm text-gray-500">
+                  No order items found
                 </div>
               )}
             </Card>

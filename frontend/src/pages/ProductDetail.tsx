@@ -65,7 +65,11 @@ export default function ProductDetail() {
   if (!product) {
     return (
       <div className="rounded-lg border-2 border-dashed border-gray-300 py-20 text-center">
-        <div className="mb-3 text-5xl">❌</div>
+        <div className="mb-4 flex justify-center">
+          <svg className="h-16 w-16 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </div>
         <h3 className="mb-2 text-lg font-semibold text-gray-900">Product not found</h3>
       </div>
     )

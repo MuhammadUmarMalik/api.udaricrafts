@@ -28,4 +28,18 @@ export default Env.rules({
 	MYSQL_USER: Env.schema.string(),
 	MYSQL_PASSWORD: Env.schema.string.optional(),
 	MYSQL_DB_NAME: Env.schema.string(),
+	
+	// Stripe Configuration
+	STRIPE_SECRET_KEY: Env.schema.string.optional(),
+	STRIPE_API_VERSION: Env.schema.string.optional(),
+	STRIPE_PUBLISHABLE_KEY: Env.schema.string.optional(),
+	
+	// JazzCash Configuration
+	JAZZCASH_MERCHANT_ID: Env.schema.string.optional(),
+	JAZZCASH_PASSWORD: Env.schema.string.optional(),
+	JAZZCASH_SECRET_KEY: Env.schema.string.optional(),
+	JAZZCASH_RETURN_URL: Env.schema.string.optional(),
+	
+	// Frontend URL
+	FRONTEND_URL: Env.schema.string.optional(),
 })

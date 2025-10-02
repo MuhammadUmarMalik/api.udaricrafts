@@ -1,6 +1,7 @@
 // start/app/Controllers/Http/OrderController.ts
 import Mail from '@ioc:Adonis/Addons/Mail'
 import { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
+import Database from '@ioc:Adonis/Lucid/Database'
 import Order from 'App/Models/Order'
 import OrderItem from 'App/Models/OrderItem'
 import PaymentDetail from 'App/Models/PaymentDetail'
@@ -13,8 +14,8 @@ import Env from '@ioc:Adonis/Core/Env';
 import axios from 'axios'
 import crypto from 'crypto'
 
-const stripe = new Stripe(Env.get('STRIPE_SECRET_KEY'), {
-    apiVersion: Env.get('STRIPE_API_VERSION'),
+const stripe = new Stripe(Env.get('STRIPE_SECRET_KEY', 'sk_test_default'), {
+    apiVersion: Env.get('STRIPE_API_VERSION', '2023-10-16') as any,
 })
 
 export default class OrderController {
@@ -22,29 +23,113 @@ export default class OrderController {
         const orderId = params.id
         const { status } = request.only(['status'])
 
-        const order = await Order.find(orderId)
-        if (!order) {
-            return response.status(404).json({ message: 'Order not found' })
+        const trx = await Database.transaction()
+
+        try {
+            const order = await Order.query({ client: trx })
+                .where('id', orderId)
+                .preload('orderItems')
+                .firstOrFail()
+
+            const oldStatus = order.status
+
+            // If order is being cancelled, restore stock
+            if (status === 'cancelled' && oldStatus !== 'cancelled') {
+                console.log('🔄 Restoring stock for cancelled order:', order.order_number)
+
+                for (const orderItem of order.orderItems) {
+                    const product = await Product.query({ client: trx })
+                        .where('id', orderItem.productId)
+                        .forUpdate()
+                        .firstOrFail()
+
+                    const newQuantity = product.quantity + orderItem.quantity
+                    product.quantity = newQuantity
+                    await product.useTransaction(trx).save()
+
+                    console.log(`  ↩️  ${product.name}: ${product.quantity - orderItem.quantity} → ${newQuantity} (+${orderItem.quantity} restored)`)
+                }
+            }
+
+            // If order was cancelled and is being reactivated, reduce stock again
+            if (oldStatus === 'cancelled' && status !== 'cancelled') {
+                console.log('🔄 Reducing stock for reactivated order:', order.order_number)
+
+                for (const orderItem of order.orderItems) {
+                    const product = await Product.query({ client: trx })
+                        .where('id', orderItem.productId)
+                        .forUpdate()
+                        .firstOrFail()
+
+                    // Check if sufficient stock is available
+                    if (product.quantity < orderItem.quantity) {
+                        await trx.rollback()
+                        return response.status(400).json({ 
+                            message: `Cannot reactivate order. Insufficient stock for "${product.name}". Available: ${product.quantity}, Required: ${orderItem.quantity}` 
+                        })
+                    }
+
+                    const newQuantity = product.quantity - orderItem.quantity
+                    product.quantity = newQuantity
+                    await product.useTransaction(trx).save()
+
+                    console.log(`  ⬇️  ${product.name}: ${product.quantity + orderItem.quantity} → ${newQuantity} (-${orderItem.quantity})`)
+                }
+            }
+
+            // Update order status
+            order.status = status
+            await order.useTransaction(trx).save()
+
+            await trx.commit()
+            
+            console.log('✅ Order status updated:', order.order_number, '→', status)
+
+            // Send notification email
+            try {
+                const statusMessages: Record<string, string> = {
+                    'pending': 'is being processed',
+                    'processing': 'is being prepared',
+                    'shipped': 'has been shipped',
+                    'delivered': 'has been delivered',
+                    'cancelled': 'has been cancelled'
+                }
+
+                await Mail.send((message) => {
+                    message
+                        .to(order.email)
+                        .from('no-reply@yourstore.com')
+                        .subject(`Order ${status.charAt(0).toUpperCase() + status.slice(1)} - Udari Crafts`)
+                        .html(`
+                    <h1>Order Status Update</h1>
+                    <p>Dear ${order.name},</p>
+                    <p>Your order <strong>${order.order_number}</strong> ${statusMessages[status] || status}.</p>
+                    ${status === 'cancelled' ? '<p><em>Your product quantities have been restored to inventory.</em></p>' : ''}
+                    <p><strong>Order Total:</strong> Rs ${order.total.toLocaleString()}</p>
+                    <p>Thank you for shopping with us!</p>
+                    <br>
+                    <h3>Best Regards,<br>Udari Crafts Team</h3>
+                  `)
+                })
+            } catch (emailError) {
+                console.error('⚠️ Email notification failed:', emailError)
+            }
+
+            return response.status(200).json({ 
+                message: 'Order status updated successfully', 
+                order,
+                stockRestored: status === 'cancelled' && oldStatus !== 'cancelled'
+            })
+
+        } catch (error) {
+            await trx.rollback()
+            console.error('❌ Failed to update order status:', error)
+            
+            return response.status(500).json({ 
+                message: 'Failed to update order status', 
+                error: error.message 
+            })
         }
-
-        order.status = status
-        await order.save()
-        await Mail.send((message) => {
-            message
-                .to(order.email)
-                .from('no-reply@yourstore.com')
-                .subject('Order Confirmation')
-                .html(`
-            <h1>Order Confirmation</h1>
-            <p>Dear ${order.name},</p>
-            <p>Thank you for your order. Your order number is <br> ${order.order_number}.</p>
-            <p>We will notify you once your order is ${order.status}.</p>
-            <p>Thank you for shopping with us!</p>
-            <h3>Regards: Udari Crafts</h3>
-          `)
-        })
-
-        return response.status(200).json({ message: 'Order status updated successfully', order })
     }
 
     public async updatePaymentStatus({ request, params, response }: HttpContextContract) {
@@ -85,30 +170,60 @@ export default class OrderController {
             return response.status(400).json({ message: 'Products are required and must be an array' })
         }
 
+        // Use database transaction for atomicity
+        const trx = await Database.transaction()
+
         try {
-            // Fetch products from the database
+            // Fetch products from the database with lock (for concurrency safety)
             const productIds = products.map(p => p.productId)
-            const productList = await Product.query().whereIn('id', productIds)
+            const productList = await Product.query({ client: trx })
+                .whereIn('id', productIds)
+                .forUpdate() // Lock rows to prevent race conditions
 
-            // Check if all requested products are available in sufficient quantity
+            console.log('📦 Processing order with products:', productIds)
+
+            // Validate stock availability and calculate total price
             let totalPrice = 0
+            const stockUpdates: { product: Product; ordered: number; remaining: number }[] = []
+
             for (let product of products) {
                 const foundProduct = productList.find(p => p.id === product.productId)
-                if (!foundProduct || foundProduct.quantity < product.buyingQuantity) {
-                    return response.status(400).json({ message: `Product ${product.name} is not available in the requested quantity` })
+                
+                if (!foundProduct) {
+                    await trx.rollback()
+                    return response.status(404).json({ 
+                        message: `Product with ID ${product.productId} not found` 
+                    })
                 }
-                // Calculate total price
-                totalPrice += foundProduct.price * product.buyingQuantity
+
+                if (foundProduct.quantity < product.buyingQuantity) {
+                    await trx.rollback()
+                    return response.status(400).json({ 
+                        message: `Insufficient stock for "${foundProduct.name}". Available: ${foundProduct.quantity}, Requested: ${product.buyingQuantity}` 
+                    })
+                }
+
+                // Calculate price with discount
+                const discountedPrice = foundProduct.price - (foundProduct.price * foundProduct.discount / 100)
+                const itemTotal = discountedPrice * product.buyingQuantity
+                totalPrice += itemTotal
+
+                stockUpdates.push({
+                    product: foundProduct,
+                    ordered: product.buyingQuantity,
+                    remaining: foundProduct.quantity - product.buyingQuantity
+                })
+
+                console.log(`  ✅ ${foundProduct.name}: ${foundProduct.quantity} → ${foundProduct.quantity - product.buyingQuantity} (ordered: ${product.buyingQuantity})`)
             }
 
-            // Update product quantities
-            for (let product of products) {
-                const foundProduct = productList.find(p => p.id === product.productId)
-                if (foundProduct) {
-                    foundProduct.quantity -= product.buyingQuantity
-                    await foundProduct.save()
-                }
+            // Update product quantities (AUTOMATIC STOCK MANAGEMENT)
+            for (let update of stockUpdates) {
+                update.product.quantity = update.remaining
+                await update.product.useTransaction(trx).save()
             }
+
+            console.log('💰 Total order amount: Rs', totalPrice)
 
             // Create the order
             const orderNumber = uuidv4()
@@ -120,13 +235,16 @@ export default class OrderController {
                 order_number: orderNumber,
                 total: totalPrice,
                 status: 'pending'
-            })
+            }, { client: trx })
+
+            // Create payment detail
             await PaymentDetail.create({
                 orderId: newOrder.id,
                 amount: totalPrice,
                 type: 'card',
-                status: 'pending' // Default status
-            })
+                status: 'pending'
+            }, { client: trx })
+
             // Create order items
             for (const product of products) {
                 const foundProduct = productList.find(p => p.id === product.productId)
@@ -134,31 +252,57 @@ export default class OrderController {
                     await OrderItem.create({
                         orderId: newOrder.id,
                         productId: product.productId,
-                        item_name: foundProduct.name, // Include the product name
+                        item_name: foundProduct.name,
                         quantity: product.buyingQuantity,
-                    })
+                    }, { client: trx })
                 }
             }
 
-            // Send confirmation email
-            // const productDetails = products.map(p => `Product name: ${p.name}, Quantity: ${p.buyingQuantity}`).join('<br/>')
-            await Mail.send((message) => {
-                message
-                    .to(email)
-                    .from('no-reply@yourstore.com')
-                    .subject('Order Confirmation')
-                    .html(`
-            <h1>Order Confirmation</h1>
-            <p>Dear ${name},</p>
-            <p>Thank you for your order. Your order number is <br> ${orderNumber}.</p>
-            <p>We will notify you once your order is  ${newOrder.status}.</p>
-            <p>Thank you for shopping with us!</p>
-            <h3>Regards: Udari Crafts</h3>
-          `)
-            })
-            return response.send(Response('your order ', newOrder));
+            // Commit transaction - all changes are now permanent
+            await trx.commit()
+            
+            console.log('✅ Order created successfully:', orderNumber)
+            console.log('📧 Sending confirmation email...')
+
+            // Send confirmation email (outside transaction)
+            try {
+                await Mail.send((message) => {
+                    message
+                        .to(email)
+                        .from('no-reply@yourstore.com')
+                        .subject('Order Confirmation - Udari Crafts')
+                        .html(`
+                <h1>Order Confirmation</h1>
+                <p>Dear ${name},</p>
+                <p>Thank you for your order! Your order has been confirmed.</p>
+                <p><strong>Order Number:</strong> ${orderNumber}</p>
+                <p><strong>Total Amount:</strong> Rs ${totalPrice.toLocaleString()}</p>
+                <p><strong>Status:</strong> ${newOrder.status}</p>
+                <p>We will notify you once your order is processed and shipped.</p>
+                <p>Thank you for shopping with us!</p>
+                <br>
+                <h3>Best Regards,<br>Udari Crafts Team</h3>
+              `)
+                })
+            } catch (emailError) {
+                console.error('⚠️ Email sending failed:', emailError)
+                // Don't fail the order if email fails
+            }
+
+            return response.status(201).send(Response('Order created successfully', {
+                order: newOrder,
+                message: 'Stock has been automatically updated'
+            }))
+
         } catch (error) {
-            return response.status(500).json({ message: 'An error occurred while processing your order', error: error.message })
+            // Rollback transaction on any error
+            await trx.rollback()
+            console.error('❌ Order creation failed:', error)
+            
+            return response.status(500).json({ 
+                message: 'An error occurred while processing your order', 
+                error: error.message 
+            })
         }
     }
 
@@ -166,6 +310,11 @@ export default class OrderController {
         try {
             const { date, name, status } = request.qs()
             let query = Order.query()
+                .preload('paymentDetails')
+                .preload('orderItems', (orderItemsQuery) => {
+                    orderItemsQuery.preload('product')
+                })
+            
             if (date) {
                 query = query.where('created_at', date)
             }
@@ -179,8 +328,41 @@ export default class OrderController {
             const limit = request.input('limit', 10)
             const results = await query.paginate(page, limit)
 
-            return response.send(Response('Get All Product with Pagination', results))
+            // Serialize the results
+            const serialized = results.serialize({
+                fields: {
+                    pick: ['id', 'order_number', 'total', 'name', 'email', 'phone', 'address', 'status', 'createdAt', 'updatedAt']
+                },
+                relations: {
+                    paymentDetails: {
+                        fields: ['id', 'status', 'amount', 'type']
+                    },
+                    orderItems: {
+                        fields: ['id', 'item_name', 'quantity', 'productId'],
+                        relations: {
+                            product: {
+                                fields: ['id', 'name', 'price']
+                            }
+                        }
+                    }
+                }
+            })
+
+            // Transform the results to include payment_status at the order level
+            const transformedResults = {
+                ...serialized,
+                data: serialized.data.map((order: any) => ({
+                    ...order,
+                    payment_status: order.paymentDetails?.[0]?.status || 'pending'
+                }))
+            }
+
+            console.log('📦 Loaded orders with items:', transformedResults.data.length)
+            console.log('📋 Sample order items:', transformedResults.data[0]?.orderItems)
+
+            return response.send(Response('Get All Orders with Pagination', transformedResults))
         } catch (error) {
+            console.error('❌ Error loading orders:', error)
             return response.status(400).send(error);
         }
     }
@@ -209,16 +391,19 @@ export default class OrderController {
                 payment_method_types: ['card'],
                 line_items: lineItems,
                 mode: 'payment',
-                success_url: `https://yourdomain.com/success?session_id={CHECKOUT_SESSION_ID}&order_id=${orderId}`,
-                cancel_url: `https://yourdomain.com/cancel?order_id=${orderId}`,
+                success_url: `${Env.get('FRONTEND_URL', 'http://localhost:5173')}/payment/success?session_id={CHECKOUT_SESSION_ID}&order_id=${orderId}`,
+                cancel_url: `${Env.get('FRONTEND_URL', 'http://localhost:5173')}/payment/cancel?order_id=${orderId}`,
             })
 
             // Update the payment details with the Stripe session ID
-
             const paymentDetail = await PaymentDetail.query().where('order_id', orderId).firstOrFail()
             paymentDetail.stripeSessionID = session.id
-            paymentDetail.status = 'paid' // Update the status if needed
+            paymentDetail.status = 'pending' // Keep pending until payment is confirmed
             await paymentDetail.save()
+
+            console.log('💳 Stripe checkout session created:', session.id)
+            console.log('📋 Order ID:', orderId)
+            console.log('🔗 Payment URL:', session.url)
 
             return response.status(201).json({
                 id: session.id,

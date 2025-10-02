@@ -5,6 +5,8 @@ import ProductDetail from './pages/ProductDetail'
 import Cart from './pages/Cart'
 import Checkout from './pages/Checkout'
 import OrderStatus from './pages/OrderStatus'
+import PaymentSuccess from './pages/PaymentSuccess'
+import PaymentCancel from './pages/PaymentCancel'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import AdminLayout from './pages/admin/AdminLayout'
@@ -28,6 +30,8 @@ export default function App() {
       <Route element={<Layout><Cart /></Layout>} path="/cart" />
       <Route element={<Layout><Checkout /></Layout>} path="/checkout" />
       <Route element={<Layout><OrderStatus /></Layout>} path="/order/:number" />
+      <Route element={<Layout><PaymentSuccess /></Layout>} path="/payment/success" />
+      <Route element={<Layout><PaymentCancel /></Layout>} path="/payment/cancel" />
       <Route element={<Layout><Login /></Layout>} path="/login" />
       <Route element={<Layout><Register /></Layout>} path="/register" />
 

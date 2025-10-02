@@ -47,15 +47,15 @@ export default function Products() {
       .then(([productsRes, categoriesRes, reviewsRes]) => {
         const payload = (productsRes.data as any).data
         const items = Array.isArray(payload?.data) ? payload.data : Array.isArray(payload) ? payload : []
-        console.log('📦 Products API Response:', items)
-        console.log('📦 Sample product images:', items[0]?.images)
+        console.log('[Products] API Response:', items)
+        console.log('[Products] Sample product images:', items[0]?.images)
         setAllProducts(items)
         setProducts(items)
         setCategories((categoriesRes.data as any).data || [])
         setReviews((reviewsRes.data as any).data || [])
       })
       .catch((err) => {
-        console.error('❌ Failed to load data:', err)
+        console.error('[Products] Failed to load data:', err)
       })
       .finally(() => setLoading(false))
   }, [])
