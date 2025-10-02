@@ -10,10 +10,10 @@ export default class ProductValidator {
     ]),
     category_id: schema.number([rules.required()]),
     description: schema.string([rules.required()]),
-    story: schema.string([rules.required()]),
+    story: schema.string.optional(),
     sizes: schema.string.optional(),
     colors: schema.string.optional(),
-    discount: schema.number([rules.required()]),
+    discount: schema.number(),
     price: schema.number([rules.required()]),
     quantity: schema.number([rules.required()]),
   })

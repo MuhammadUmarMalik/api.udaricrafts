@@ -13,10 +13,10 @@ export default class ProductsController {
       product.name = data.name;
       product.categoryId = data.category_id;
       product.description = data.description;
-      product.story = data.story;
-      product.sizes = JSON.stringify(data.sizes);
-      product.colors = JSON.stringify(data.colors);
-      product.discount = data.discount;
+      product.story = data.story || '';
+      product.sizes = JSON.stringify(data.sizes || '');
+      product.colors = JSON.stringify(data.colors || '');
+      product.discount = data.discount || 0;
       product.price = data.price;
       product.quantity = data.quantity;
       await product.save();
@@ -104,26 +104,58 @@ export default class ProductsController {
         try {
             const product = await Product.findOrFail(params.id)
             const data = await request.validate(ProductValidator)
-            await product.merge({
-                name: data.name,
-                description: data.description,
-                price: data.price,
-            }).save()
-            const image = request.file("path")
-            let productImages = new ProductImage()
-            if (image) {
-                await image.move(Application.tmpPath('uploads'), {
-                    name: `${Date.now()}-${image.clientName}`
-                })
-                const previousImage = Application.tmpPath(`uploads/${image.fileName}`)
-                await fs.unlink(previousImage)
-                await productImages.merge({
-                    path: image.fileName
-                })
+            
+            // Update all product fields
+            product.name = data.name
+            product.categoryId = data.category_id
+            product.description = data.description
+            product.story = data.story || ''
+            product.sizes = JSON.stringify(data.sizes || '')
+            product.colors = JSON.stringify(data.colors || '')
+            product.discount = data.discount || 0
+            product.price = data.price
+            product.quantity = data.quantity
+            await product.save()
+            
+            // Handle multiple image uploads if provided
+            const images = request.files('path')
+            let productImages: ProductImage[] = []
+            
+            if (images && images.length > 0) {
+                for (let image of images) {
+                    await image.move(Application.tmpPath("uploads"), {
+                        name: `${Date.now()}-${image.clientName}`,
+                    })
+
+                    let productImage = new ProductImage()
+                    productImage.productId = product.id
+                    productImage.path = `uploads/${image.fileName}`
+                    await productImage.save()
+
+                    productImages.push(productImage)
+                }
             }
-            return response.send(Response('Product Updated Successfully', { product, productImages }))
+            
+            // Reload product with images for response
+            await product.load('images')
+            const updatedData = {
+                id: product.id,
+                name: product.name,
+                category: product.categoryId,
+                description: product.description,
+                story: product.story,
+                size: product.sizes,
+                color: product.colors,
+                discount: product.discount,
+                price: product.price,
+                quantity: product.quantity,
+                images: product.images ? product.images.map((image) => image.path) : [],
+            }
+            
+            return response.send(Response('Product Updated Successfully', updatedData))
         } catch (error) {
-            return response.send(error);
+            console.log(error)
+            return response.status(400).send(error)
         }
     }
   public async destroy({ params, response }: HttpContextContract) {
@@ -159,25 +191,29 @@ export default class ProductsController {
       const limit = request.input('limit', 10)
       const results = await query.paginate(page, limit)
 
-      results.map((product) => {
-        return {
-          id: product.id,
-          name: product.name,
-          category: product.categoryId,
-          description: product.description,
-          story: product.story,
-          size: product.sizes,
-          color: product.colors,
-          discount: product.discount,
-          price: product.price,
-          quantity: product.quantity,
-          images: product.images ? product.images.map((image) => image.path) : [], // Include image paths
-          created_at: product.createdAt,
-          updated_at: product.updatedAt,
-        };
-      });
+      // Transform the paginated results
+      const transformedData = {
+        meta: results.getMeta(),
+        data: results.all().map((product) => {
+          return {
+            id: product.id,
+            name: product.name,
+            category: product.categoryId,
+            description: product.description,
+            story: product.story,
+            size: product.sizes,
+            color: product.colors,
+            discount: product.discount,
+            price: product.price,
+            quantity: product.quantity,
+            images: product.images ? product.images.map((image) => image.path) : [],
+            created_at: product.createdAt,
+            updated_at: product.updatedAt,
+          }
+        })
+      }
 
-      return response.send(Response('Get All Products with Pagination', results))
+      return response.send(Response('Get All Products with Pagination', transformedData))
     } catch (error) {
       console.log(error)
       return response.status(500).send(Response('internal server error', error))

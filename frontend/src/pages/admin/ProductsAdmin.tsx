@@ -7,7 +7,7 @@ import Card from '../../components/ui/Card'
 import Modal from '../../components/ui/Modal'
 import Spinner from '../../components/ui/Spinner'
 import Badge from '../../components/ui/Badge'
-import { toImageUrl } from '../../utils/image'
+import { toImageUrl, getPlaceholderImage } from '../../utils/image'
 
 type ProductForm = {
   name: string
@@ -176,93 +176,133 @@ export default function ProductsAdmin() {
         </Button>
       </div>
 
-      {/* Products Table */}
-      <Card className="overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Product
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Category
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Price
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Stock
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Discount
-                </th>
-                <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200 bg-white">
-              {products.map((p) => (
-                <tr key={p.id} className="hover:bg-gray-50">
-                  <td className="whitespace-nowrap px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <img
-                        src={toImageUrl(p.images?.[0])}
-                        alt={p.name}
-                        className="h-12 w-12 rounded-lg object-cover"
-                      />
-                      <div>
-                        <div className="font-medium text-gray-900">{p.name}</div>
-                        <div className="text-sm text-gray-500">ID: {p.id}</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="whitespace-nowrap px-6 py-4">
-                    <Badge variant="info">
-                      {categories.find((c) => c.id === p.category)?.name || 'Unknown'}
-                    </Badge>
-                  </td>
-                  <td className="whitespace-nowrap px-6 py-4">
-                    <div className="font-semibold text-gray-900">Rs {p.price}</div>
-                  </td>
-                  <td className="whitespace-nowrap px-6 py-4">
-                    <Badge variant={p.quantity > 10 ? 'success' : p.quantity > 0 ? 'warning' : 'danger'}>
-                      {p.quantity} units
-                    </Badge>
-                  </td>
-                  <td className="whitespace-nowrap px-6 py-4">
-                    {p.discount > 0 ? (
-                      <Badge variant="danger">{p.discount}% OFF</Badge>
-                    ) : (
-                      <span className="text-gray-400">—</span>
-                    )}
-                  </td>
-                  <td className="whitespace-nowrap px-6 py-4 text-right">
-                    <div className="flex justify-end gap-2">
-                      <Button onClick={() => openEditModal(p)} variant="outline" size="sm">
-                        ✏️ Edit
-                      </Button>
-                      <Button onClick={() => remove(p.id)} variant="danger" size="sm">
-                        🗑️ Delete
-                      </Button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-
-          {products.length === 0 && (
-            <div className="py-12 text-center">
-              <div className="mb-3 text-5xl">📦</div>
-              <h3 className="mb-2 text-lg font-semibold text-gray-900">No products yet</h3>
-              <p className="mb-4 text-gray-500">Get started by creating your first product</p>
-              <Button onClick={openCreateModal}>Create Product</Button>
+      {/* Products Grid */}
+      {products.length === 0 ? (
+        <Card className="border-0 shadow-md">
+          <div className="py-16 text-center">
+            <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-gray-100">
+              <svg className="h-10 w-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+              </svg>
             </div>
-          )}
+            <h3 className="mb-2 text-lg font-semibold text-gray-900">No products yet</h3>
+            <p className="mb-6 text-gray-500">Get started by creating your first product</p>
+            <Button onClick={openCreateModal} className="shadow-lg">
+              <svg className="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              Create Product
+            </Button>
+          </div>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {products.map((p) => (
+            <Card key={p.id} className="group relative flex flex-col overflow-hidden border-0 shadow-md transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl">
+              {/* Product Image */}
+              <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200">
+                <img
+                  src={p.images && p.images.length > 0 && p.images[0] ? toImageUrl(p.images[0]) : getPlaceholderImage(400, 400, p.name)}
+                  alt={p.name}
+                  className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"
+                  onError={(e) => {
+                    const target = e.currentTarget
+                    target.src = getPlaceholderImage(400, 400, p.name)
+                    target.onerror = null
+                  }}
+                  loading="lazy"
+                />
+                
+                {/* Discount Badge */}
+                {p.discount > 0 && (
+                  <div className="absolute left-3 top-3 flex items-center gap-1 rounded-full bg-gradient-to-r from-red-500 to-red-600 px-3 py-1.5 text-xs font-bold text-white shadow-lg">
+                    <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z" />
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.076-2.354-1.253V5z" clipRule="evenodd" />
+                    </svg>
+                    {p.discount}% OFF
+                  </div>
+                )}
+
+                {/* Image Count Badge */}
+                {p.images && p.images.length > 1 && (
+                  <div className="absolute bottom-3 right-3 flex items-center gap-1 rounded-full bg-black/70 px-2 py-1 text-xs font-medium text-white backdrop-blur-sm">
+                    <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
+                    </svg>
+                    {p.images.length}
+                  </div>
+                )}
+
+                {/* Gradient Overlay */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100"></div>
+              </div>
+
+              {/* Product Info */}
+              <div className="flex flex-1 flex-col p-5">
+                {/* Category Badge */}
+                <div className="mb-3">
+                  <Badge variant="info" className="text-xs">
+                    {categories.find((c) => c.id === p.category)?.name || 'Unknown'}
+                  </Badge>
+                </div>
+
+                {/* Product Name */}
+                <h3 className="mb-2 line-clamp-2 text-lg font-bold text-gray-900 group-hover:text-blue-600">
+                  {p.name}
+                </h3>
+
+                {/* Product ID */}
+                <p className="mb-3 text-xs text-gray-500">
+                  ID: <span className="font-mono font-medium">{p.id}</span>
+                </p>
+
+                {/* Price and Stock */}
+                <div className="mb-4 flex items-center justify-between">
+                  <div>
+                    <p className="text-2xl font-bold text-blue-600">
+                      Rs {p.price.toLocaleString()}
+                    </p>
+                  </div>
+                  <div>
+                    <Badge 
+                      variant={p.quantity > 10 ? 'success' : p.quantity > 0 ? 'warning' : 'danger'}
+                      className="inline-flex items-center gap-1"
+                    >
+                      <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M10 2a5 5 0 00-5 5v2a2 2 0 00-2 2v5a2 2 0 002 2h10a2 2 0 002-2v-5a2 2 0 00-2-2H7V7a3 3 0 015.905-.75 1 1 0 001.937-.5A5.002 5.002 0 0010 2z" />
+                      </svg>
+                      {p.quantity}
+                    </Badge>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="mt-auto grid grid-cols-2 gap-2 border-t pt-4">
+                  <button
+                    onClick={() => openEditModal(p)}
+                    className="inline-flex items-center justify-center gap-2 rounded-lg border border-blue-300 bg-blue-50 px-4 py-2.5 text-sm font-semibold text-blue-700 transition-all hover:bg-blue-600 hover:text-white hover:shadow-md"
+                  >
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => remove(p.id)}
+                    className="inline-flex items-center justify-center gap-2 rounded-lg border border-red-300 bg-red-50 px-4 py-2.5 text-sm font-semibold text-red-700 transition-all hover:bg-red-600 hover:text-white hover:shadow-md"
+                  >
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    Delete
+                  </button>
+                </div>
+              </div>
+            </Card>
+          ))}
         </div>
-      </Card>
+      )}
 
       {/* Create/Edit Modal */}
       <Modal
@@ -377,16 +417,25 @@ export default function ProductsAdmin() {
           {editingProduct && editingProduct.images && editingProduct.images.length > 0 && (
             <div>
               <label className="mb-2 block text-sm font-medium text-gray-700">Current Images</label>
-              <div className="flex gap-2 overflow-x-auto">
+              <div className="custom-scrollbar flex gap-3 overflow-x-auto rounded-lg bg-gray-50 p-3">
                 {editingProduct.images.map((img, idx) => (
-                  <img
-                    key={idx}
-                    src={toImageUrl(img)}
-                    alt=""
-                    className="h-20 w-20 rounded-lg object-cover"
-                  />
+                  <div key={idx} className="relative flex-shrink-0 overflow-hidden rounded-lg shadow-sm">
+                    <img
+                      src={toImageUrl(img)}
+                      alt={`Product image ${idx + 1}`}
+                      className="h-24 w-24 rounded-lg border-2 border-gray-200 object-cover"
+                      onError={(e) => {
+                        const target = e.currentTarget
+                        target.src = getPlaceholderImage(100, 100, `${idx + 1}`)
+                        target.onerror = null
+                      }}
+                    />
+                  </div>
                 ))}
               </div>
+              <p className="mt-2 text-xs text-gray-500">
+                ℹ️ Uploading new images will add to the existing ones
+              </p>
             </div>
           )}
 
