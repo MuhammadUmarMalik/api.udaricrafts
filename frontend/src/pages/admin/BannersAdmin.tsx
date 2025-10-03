@@ -11,6 +11,9 @@ export default function BannersAdmin() {
   const [loading, setLoading] = useState(true)
   const [file, setFile] = useState<File | null>(null)
   const [uploading, setUploading] = useState(false)
+  const [editingBanner, setEditingBanner] = useState<any>(null)
+  const [editFile, setEditFile] = useState<File | null>(null)
+  const [updating, setUpdating] = useState(false)
 
   const fetch = () => {
     setLoading(true)
@@ -38,6 +41,30 @@ export default function BannersAdmin() {
       alert('Failed to upload banner')
     } finally {
       setUploading(false)
+    }
+  }
+
+  const startEdit = (banner: any) => {
+    setEditingBanner(banner)
+    setEditFile(null)
+  }
+
+  const update = async () => {
+    if (!editFile || !editingBanner) return
+    setUpdating(true)
+    const fd = new FormData()
+    fd.append('image', editFile)
+    try {
+      await api.put(endpoints.admin.banner(editingBanner.id), fd, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+      setEditingBanner(null)
+      setEditFile(null)
+      fetch()
+    } catch (e) {
+      alert('Failed to update banner')
+    } finally {
+      setUpdating(false)
     }
   }
 
@@ -94,12 +121,80 @@ export default function BannersAdmin() {
               />
               <div className="p-4">
                 <p className="mb-3 truncate text-sm text-gray-600">{b.image}</p>
-                <Button onClick={() => remove(b.id)} variant="danger" size="sm" className="w-full">
-                  Delete
-                </Button>
+                <div className="flex gap-2">
+                  <Button onClick={() => startEdit(b)} variant="outline" size="sm" className="flex-1">
+                    Edit
+                  </Button>
+                  <Button onClick={() => remove(b.id)} variant="danger" size="sm" className="flex-1">
+                    Delete
+                  </Button>
+                </div>
               </div>
             </Card>
           ))}
+        </div>
+      )}
+
+      {/* Edit Modal */}
+      {editingBanner && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <Card className="w-full max-w-lg p-6">
+            <h3 className="mb-4 text-lg font-semibold text-gray-900">Edit Banner</h3>
+            
+            {/* Current Banner Preview */}
+            <div className="mb-4">
+              <p className="mb-2 text-sm font-medium text-gray-700">Current Banner</p>
+              <img
+                src={toImageUrl(editingBanner.image)}
+                alt="Current banner"
+                className="h-40 w-full rounded-lg object-cover"
+              />
+            </div>
+
+            {/* New File Upload */}
+            <div className="mb-4">
+              <p className="mb-2 text-sm font-medium text-gray-700">Upload New Image</p>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => setEditFile(e.target.files?.[0] || null)}
+                className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm"
+              />
+            </div>
+
+            {/* Preview New Image */}
+            {editFile && (
+              <div className="mb-4">
+                <p className="mb-2 text-sm font-medium text-gray-700">New Banner Preview</p>
+                <img
+                  src={URL.createObjectURL(editFile)}
+                  alt="New banner preview"
+                  className="h-40 w-full rounded-lg object-cover"
+                />
+              </div>
+            )}
+
+            <div className="flex gap-3">
+              <Button
+                onClick={() => {
+                  setEditingBanner(null)
+                  setEditFile(null)
+                }}
+                variant="outline"
+                className="flex-1"
+                disabled={updating}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={update}
+                className="flex-1"
+                disabled={updating || !editFile}
+              >
+                {updating ? 'Updating...' : 'Update Banner'}
+              </Button>
+            </div>
+          </Card>
         </div>
       )}
     </div>

@@ -4,6 +4,7 @@ import { BaseModel, column } from '@ioc:Adonis/Lucid/Orm'
 export default class Complaint extends BaseModel {
   @column({ isPrimary: true })
   public id: number
+  
   @column()
   public name: string
 
@@ -19,9 +20,9 @@ export default class Complaint extends BaseModel {
   @column()
   public status: string
 
-  @column.dateTime({ autoCreate: true })
+  @column.dateTime({ autoCreate: true, serializeAs: 'createdAt' })
   public createdAt: DateTime
 
-  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  @column.dateTime({ autoCreate: true, autoUpdate: true, serializeAs: 'updatedAt' })
   public updatedAt: DateTime
 }

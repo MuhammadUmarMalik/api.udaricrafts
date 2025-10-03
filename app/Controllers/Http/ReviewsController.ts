@@ -2,12 +2,17 @@ import type { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
 import Review from 'App/Models/Review';
 import { Response } from 'App/Utils/ApiUtil';
 import ReviewValidator from 'App/Validators/ReviewValidator';
+import ReviewUpdateValidator from 'App/Validators/ReviewUpdateValidator';
 
 export default class ReviewsController {
     public async store({ request, response }: HttpContextContract) {
         try {
-            const review = await request.validate(ReviewValidator)
-            await Review.create(review)
+            const reviewData = await request.validate(ReviewValidator)
+            // Set default status to 'pending' if not provided
+            const review = await Review.create({
+                ...reviewData,
+                status: reviewData.status || 'pending'
+            })
             return response.send(Response('Review Submitted Successfully', review))
         } catch (error) {
             return response.status(400).send(error)
@@ -26,7 +31,8 @@ export default class ReviewsController {
     public async update({ request, params, response }: HttpContextContract) {
         try {
             const review = await Review.findOrFail(params.id)
-            const data = await request.validate(ReviewValidator)
+            // Use ReviewUpdateValidator which allows partial updates
+            const data = await request.validate(ReviewUpdateValidator)
             await review.merge(data).save()
             return response.send(Response('Review Updated Successfully', review))
         } catch (error) {

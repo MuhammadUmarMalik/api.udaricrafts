@@ -17,6 +17,8 @@ import OrdersAdmin from './pages/admin/OrdersAdmin'
 import ReviewsAdmin from './pages/admin/ReviewsAdmin'
 import BannersAdmin from './pages/admin/BannersAdmin'
 import UsersAdmin from './pages/admin/UsersAdmin'
+import NotificationsAdmin from './pages/admin/NotificationsAdmin'
+import ComplaintsAdmin from './pages/admin/ComplaintsAdmin'
 import ProtectedRoute from './components/ProtectedRoute'
 import Layout from './components/Layout'
 
@@ -51,6 +53,8 @@ export default function App() {
         <Route path="reviews" element={<ReviewsAdmin />} />
         <Route path="banners" element={<BannersAdmin />} />
         <Route path="users" element={<UsersAdmin />} />
+        <Route path="notifications" element={<NotificationsAdmin />} />
+        <Route path="complaints" element={<ComplaintsAdmin />} />
       </Route>
     </Routes>
   )

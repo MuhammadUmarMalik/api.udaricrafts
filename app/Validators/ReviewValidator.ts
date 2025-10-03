@@ -24,12 +24,11 @@ export default class ReviewValidator {
    *    ```
    */
   public schema = schema.create({
-
     rating: schema.string([rules.required()]),
     description: schema.string([rules.required()]),
     name: schema.string([rules.required()]),
     email: schema.string([rules.email()]),
-    status: schema.string([rules.required()]),
+    status: schema.string.optional(),
     product_id: schema.number([rules.required()]),
   })
 
@@ -50,7 +49,6 @@ export default class ReviewValidator {
     'rating.required': 'The rating cannot be empty.',
     'description.required': 'The description cannot be empty.',
     'name.required': 'The name cannot be empty.',
-    'email.email': 'The email cannot be empty.',
-    'status.required': 'The status cannot be empty.',
+    'email.email': 'The email must be a valid email address.',
   }
 }

@@ -128,7 +128,7 @@ export default function ProductDetail() {
         email: reviewForm.email,
         rating: reviewForm.rating.toString(),
         description: reviewForm.description,
-        status: 'pending',
+        // Status is automatically set to 'pending' by the backend
       })
 
       setReviewSuccess(true)
