@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { api } from '../api/client'
 import { endpoints } from '../api/endpoints'
 import { toImageUrl, getPlaceholderImage } from '../utils/image'
@@ -11,9 +11,12 @@ type Banner = { id: number; image: string }
 type Category = { id: number; name: string }
 
 export default function Home() {
+  const navigate = useNavigate()
   const [banners, setBanners] = useState<Banner[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
+  const [orderNumber, setOrderNumber] = useState('')
+  const [searchError, setSearchError] = useState('')
 
   useEffect(() => {
     Promise.all([
@@ -22,6 +25,22 @@ export default function Home() {
     ])
       .finally(() => setLoading(false))
   }, [])
+
+  const handleTrackOrder = () => {
+    setSearchError('')
+    if (!orderNumber.trim()) {
+      setSearchError('Please enter an order number')
+      return
+    }
+    // Navigate to order status page
+    navigate(`/order-status/${orderNumber.trim()}`)
+  }
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleTrackOrder()
+    }
+  }
 
   if (loading) {
     return (
@@ -124,6 +143,121 @@ export default function Home() {
             </div>
           </div>
         </div>
+      </section>
+
+      {/* Order Tracking Section */}
+      <section id="track-order" className="relative scroll-mt-20">
+        <Card className="overflow-hidden border-0 shadow-2xl">
+          <div className="bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 p-8 md:p-12">
+            <div className="mx-auto max-w-3xl text-center">
+              {/* Icon & Title */}
+              <div className="mb-6 flex justify-center">
+                <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 to-purple-600 shadow-lg">
+                  <svg className="h-8 w-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </div>
+              </div>
+
+              <h2 className="mb-3 text-3xl font-bold text-gray-900 md:text-4xl">
+                Track Your Order
+              </h2>
+              <p className="mb-8 text-lg text-gray-600">
+                Enter your order number below to check the status of your order
+              </p>
+
+              {/* Search Bar */}
+              <div className="mx-auto max-w-2xl">
+                <div className="relative flex flex-col gap-3 sm:flex-row">
+                  <div className="relative flex-1">
+                    <input
+                      type="text"
+                      value={orderNumber}
+                      onChange={(e) => {
+                        setOrderNumber(e.target.value)
+                        setSearchError('')
+                      }}
+                      onKeyPress={handleKeyPress}
+                      placeholder="Enter order number (e.g., ORD-123456)"
+                      className={`w-full rounded-xl border-2 ${
+                        searchError ? 'border-red-300' : 'border-gray-300'
+                      } bg-white pl-14 pr-6 py-4 text-lg text-gray-900 shadow-md transition-all placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-4 focus:ring-blue-500/20`}
+                    />
+                    <div className="pointer-events-none absolute inset-y-0 left-4 flex items-center">
+                      <svg className="h-6 w-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                      </svg>
+                    </div>
+                  </div>
+                  <button
+                    onClick={handleTrackOrder}
+                    className="group flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 px-8 py-4 text-lg font-bold text-white shadow-lg transition-all hover:scale-105 hover:from-blue-700 hover:to-purple-700 hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-50"
+                    disabled={!orderNumber.trim()}
+                  >
+                    <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                    Track Order
+                    <svg className="h-5 w-5 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                    </svg>
+                  </button>
+                </div>
+
+                {/* Error Message */}
+                {searchError && (
+                  <div className="mt-3 animate-fade-in rounded-lg bg-red-50 p-3 text-left text-sm text-red-700">
+                    <div className="flex items-center gap-2">
+                      <svg className="h-5 w-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                      </svg>
+                      <span className="font-medium">{searchError}</span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Help Text */}
+                <div className="mt-4 flex items-center justify-center gap-2 text-sm text-gray-500">
+                  <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                  </svg>
+                  <span>Find your order number in your confirmation email</span>
+                </div>
+              </div>
+
+              {/* Quick Features */}
+              <div className="mt-10 grid gap-6 sm:grid-cols-3">
+                <div className="rounded-xl bg-white p-6 text-center shadow-md transition-all hover:-translate-y-1 hover:shadow-lg">
+                  <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-blue-100">
+                    <svg className="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <h3 className="mb-2 font-semibold text-gray-900">Real-Time Updates</h3>
+                  <p className="text-sm text-gray-600">Track your order status in real-time</p>
+                </div>
+                <div className="rounded-xl bg-white p-6 text-center shadow-md transition-all hover:-translate-y-1 hover:shadow-lg">
+                  <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
+                    <svg className="h-6 w-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <h3 className="mb-2 font-semibold text-gray-900">Order History</h3>
+                  <p className="text-sm text-gray-600">View all your order details</p>
+                </div>
+                <div className="rounded-xl bg-white p-6 text-center shadow-md transition-all hover:-translate-y-1 hover:shadow-lg">
+                  <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-purple-100">
+                    <svg className="h-6 w-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    </svg>
+                  </div>
+                  <h3 className="mb-2 font-semibold text-gray-900">Email Updates</h3>
+                  <p className="text-sm text-gray-600">Get notifications via email</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Card>
       </section>
 
       {/* Features Section - Modern Cards */}
