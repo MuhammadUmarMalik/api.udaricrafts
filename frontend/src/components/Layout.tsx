@@ -2,6 +2,7 @@ import React from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useCartStore } from '../store/cart'
 import { useAuthStore } from '../store/auth'
+import { HomeIcon, ShoppingBagIcon, ShoppingCartIcon, UserIcon, LoginIcon, LogoutIcon } from './Icons'
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const location = useLocation()
@@ -28,27 +29,30 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             <nav className="flex items-center gap-1 sm:gap-2">
               <Link
                 to="/"
-                className={`rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+                className={`flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
                   isActive('/') ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                 }`}
               >
-                Home
+                <HomeIcon className="h-4 w-4" />
+                <span className="hidden sm:inline">Home</span>
               </Link>
               <Link
                 to="/products"
-                className={`rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+                className={`flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
                   isActive('/products') ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                 }`}
               >
-                Products
+                <ShoppingBagIcon className="h-4 w-4" />
+                <span className="hidden sm:inline">Products</span>
               </Link>
               <Link
                 to="/cart"
-                className={`relative rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+                className={`relative flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
                   isActive('/cart') ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                 }`}
               >
-                Cart
+                <ShoppingCartIcon className="h-4 w-4" />
+                <span className="hidden sm:inline">Cart</span>
                 {cartCount > 0 && (
                   <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white shadow-md">
                     {cartCount}
@@ -76,18 +80,20 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   </div>
                   <button
                     onClick={logout}
-                    className="rounded-md px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                    className="flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors"
                   >
-                    Logout
+                    <LogoutIcon className="h-4 w-4" />
+                    <span className="hidden sm:inline">Logout</span>
                   </button>
                 </>
               ) : (
                 <>
                   <Link
                     to="/login"
-                    className="rounded-md px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                    className="flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors"
                   >
-                    Login
+                    <LoginIcon className="h-4 w-4" />
+                    <span className="hidden sm:inline">Login</span>
                   </Link>
                   <Link
                     to="/register"

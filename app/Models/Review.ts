@@ -6,7 +6,7 @@ export default class Review extends BaseModel {
   @column({ isPrimary: true })
   public id: number
 
-  @column()
+  @column({ columnName: 'product_id', serializeAs: 'productId' })
   public productId: number
 
   @column()

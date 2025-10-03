@@ -7,6 +7,7 @@ import { toImageUrl, getPlaceholderImage } from '../utils/image'
 import Button from '../components/ui/Button'
 import Spinner from '../components/ui/Spinner'
 import Badge from '../components/ui/Badge'
+import Card from '../components/ui/Card'
 
 type Product = {
   id: number
@@ -19,6 +20,17 @@ type Product = {
   images?: string[]
 }
 
+type Review = {
+  id: number
+  productId: number
+  rating: string
+  description: string
+  name: string
+  email: string
+  status: string
+  createdAt: string
+}
+
 export default function ProductDetail() {
   const { id } = useParams()
   const [product, setProduct] = useState<Product | null>(null)
@@ -27,6 +39,20 @@ export default function ProductDetail() {
   const [quantity, setQuantity] = useState(1)
   const [addedToCart, setAddedToCart] = useState(false)
   const addItem = useCartStore((s) => s.addItem)
+
+  // Review states
+  const [reviews, setReviews] = useState<Review[]>([])
+  const [loadingReviews, setLoadingReviews] = useState(true)
+  const [showReviewForm, setShowReviewForm] = useState(false)
+  const [submittingReview, setSubmittingReview] = useState(false)
+  const [reviewForm, setReviewForm] = useState({
+    name: '',
+    email: '',
+    rating: 5,
+    description: ''
+  })
+  const [reviewErrors, setReviewErrors] = useState<Record<string, string>>({})
+  const [reviewSuccess, setReviewSuccess] = useState(false)
 
   useEffect(() => {
     if (!id) return
@@ -37,6 +63,29 @@ export default function ProductDetail() {
       })
       .catch(() => {})
       .finally(() => setLoading(false))
+  }, [id])
+
+  // Function to fetch reviews for this product
+  const fetchReviews = () => {
+    if (!id) return
+    setLoadingReviews(true)
+    api
+      .get(endpoints.reviews)
+      .then((r) => {
+        const allReviews = (r.data as any).data || []
+        // Filter reviews for this product - show ALL reviews (not just approved)
+        const productReviews = allReviews.filter(
+          (review: Review) => review.productId === Number(id)
+        )
+        setReviews(productReviews)
+      })
+      .catch(() => {})
+      .finally(() => setLoadingReviews(false))
+  }
+
+  // Fetch reviews for this product
+  useEffect(() => {
+    fetchReviews()
   }, [id])
 
   const handleAddToCart = () => {
@@ -52,6 +101,77 @@ export default function ProductDetail() {
     )
     setAddedToCart(true)
     setTimeout(() => setAddedToCart(false), 2000)
+  }
+
+  const validateReview = () => {
+    const errors: Record<string, string> = {}
+    if (!reviewForm.name.trim()) errors.name = 'Name is required'
+    if (!reviewForm.email.trim()) errors.email = 'Email is required'
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(reviewForm.email)) errors.email = 'Invalid email'
+    if (!reviewForm.description.trim()) errors.description = 'Review description is required'
+    if (reviewForm.description.trim().length < 10) errors.description = 'Review must be at least 10 characters'
+    setReviewErrors(errors)
+    return Object.keys(errors).length === 0
+  }
+
+  const handleSubmitReview = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!validateReview() || !product) return
+
+    setSubmittingReview(true)
+    setReviewErrors({})
+
+    try {
+      await api.post(endpoints.reviews, {
+        product_id: product.id,
+        name: reviewForm.name,
+        email: reviewForm.email,
+        rating: reviewForm.rating.toString(),
+        description: reviewForm.description,
+        status: 'pending',
+      })
+
+      setReviewSuccess(true)
+      setReviewForm({ name: '', email: '', rating: 5, description: '' })
+      setShowReviewForm(false)
+      
+      // Refresh reviews to show the newly submitted review
+      fetchReviews()
+      
+      setTimeout(() => setReviewSuccess(false), 5000)
+    } catch (error: any) {
+      console.error('Review submission error:', error)
+      setReviewErrors({
+        submit: error.response?.data?.message || error.response?.data?.errors?.[0]?.message || 'Failed to submit review. Please try again.'
+      })
+    } finally {
+      setSubmittingReview(false)
+    }
+  }
+
+  const renderStars = (rating: number, interactive: boolean = false, onRate?: (rating: number) => void) => {
+    return (
+      <div className="flex items-center gap-1">
+        {[1, 2, 3, 4, 5].map((star) => (
+          <button
+            key={star}
+            type="button"
+            onClick={() => interactive && onRate?.(star)}
+            disabled={!interactive}
+            className={`${interactive ? 'cursor-pointer hover:scale-110' : 'cursor-default'} transition-all duration-200`}
+          >
+            <svg
+              className={`h-5 w-5 ${
+                star <= rating ? 'fill-yellow-400 text-yellow-400' : 'fill-gray-200 text-gray-200'
+              }`}
+              viewBox="0 0 20 20"
+            >
+              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+            </svg>
+          </button>
+        ))}
+      </div>
+    )
   }
 
   if (loading) {
@@ -207,6 +327,244 @@ export default function ProductDetail() {
             </Button>
           </div>
         </div>
+      </div>
+
+      {/* Reviews Section */}
+      <div className="space-y-6">
+        <div className="flex items-center justify-between border-b pb-4">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900">Customer Reviews</h2>
+            <p className="mt-1 text-sm text-gray-500">
+              {reviews.length} {reviews.length === 1 ? 'review' : 'reviews'}
+            </p>
+          </div>
+          <Button
+            onClick={() => setShowReviewForm(!showReviewForm)}
+            variant={showReviewForm ? 'outline' : 'primary'}
+            size="sm"
+          >
+            {showReviewForm ? 'Cancel' : 'Write a Review'}
+          </Button>
+        </div>
+
+        {/* Success Message */}
+        {reviewSuccess && (
+          <div className="animate-fade-in rounded-lg border border-green-200 bg-green-50 p-4">
+            <div className="flex items-center gap-3">
+              <svg className="h-5 w-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              <div>
+                <p className="font-semibold text-green-900">Review Submitted Successfully!</p>
+                <p className="text-sm text-green-700">Your review will be published after admin approval.</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Review Form */}
+        {showReviewForm && (
+          <Card className="p-6">
+            <h3 className="mb-4 text-lg font-semibold text-gray-900">Write Your Review</h3>
+            <form onSubmit={handleSubmitReview} className="space-y-4">
+              {/* Rating */}
+              <div>
+                <label className="mb-2 block text-sm font-medium text-gray-700">
+                  Rating <span className="text-red-500">*</span>
+                </label>
+                {renderStars(reviewForm.rating, true, (rating) => 
+                  setReviewForm({ ...reviewForm, rating })
+                )}
+              </div>
+
+              {/* Name */}
+              <div>
+                <label className="mb-1 block text-sm font-medium text-gray-700">
+                  Your Name <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={reviewForm.name}
+                  onChange={(e) => setReviewForm({ ...reviewForm, name: e.target.value })}
+                  placeholder="John Doe"
+                  className={`w-full rounded-lg border ${
+                    reviewErrors.name ? 'border-red-500' : 'border-gray-300'
+                  } px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                />
+                {reviewErrors.name && (
+                  <p className="mt-1 text-xs text-red-600">{reviewErrors.name}</p>
+                )}
+              </div>
+
+              {/* Email */}
+              <div>
+                <label className="mb-1 block text-sm font-medium text-gray-700">
+                  Your Email <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="email"
+                  value={reviewForm.email}
+                  onChange={(e) => setReviewForm({ ...reviewForm, email: e.target.value })}
+                  placeholder="john@example.com"
+                  className={`w-full rounded-lg border ${
+                    reviewErrors.email ? 'border-red-500' : 'border-gray-300'
+                  } px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                />
+                {reviewErrors.email && (
+                  <p className="mt-1 text-xs text-red-600">{reviewErrors.email}</p>
+                )}
+              </div>
+
+              {/* Description */}
+              <div>
+                <label className="mb-1 block text-sm font-medium text-gray-700">
+                  Your Review <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  value={reviewForm.description}
+                  onChange={(e) => setReviewForm({ ...reviewForm, description: e.target.value })}
+                  placeholder="Share your experience with this product..."
+                  rows={4}
+                  className={`w-full rounded-lg border ${
+                    reviewErrors.description ? 'border-red-500' : 'border-gray-300'
+                  } px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                />
+                {reviewErrors.description && (
+                  <p className="mt-1 text-xs text-red-600">{reviewErrors.description}</p>
+                )}
+                <p className="mt-1 text-xs text-gray-500">
+                  Minimum 10 characters ({reviewForm.description.length} / 10)
+                </p>
+              </div>
+
+              {/* Error Message */}
+              {reviewErrors.submit && (
+                <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600">
+                  {reviewErrors.submit}
+                </div>
+              )}
+
+              {/* Submit Button */}
+              <div className="flex justify-end gap-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setShowReviewForm(false)
+                    setReviewErrors({})
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={submittingReview}>
+                  {submittingReview ? 'Submitting...' : 'Submit Review'}
+                </Button>
+              </div>
+            </form>
+          </Card>
+        )}
+
+        {/* Reviews List */}
+        {loadingReviews ? (
+          <div className="flex items-center justify-center py-12">
+            <Spinner size="md" className="text-blue-600" />
+          </div>
+        ) : reviews.length === 0 ? (
+          <Card className="border-0 p-12 text-center shadow-md">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-100">
+              <svg className="h-8 w-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+              </svg>
+            </div>
+            <h3 className="mb-2 text-lg font-semibold text-gray-900">No Reviews Yet</h3>
+            <p className="mb-4 text-gray-600">Be the first to review this product!</p>
+            <Button onClick={() => setShowReviewForm(true)} size="sm">
+              Write First Review
+            </Button>
+          </Card>
+        ) : (
+          <div className="space-y-4">
+            {reviews.map((review) => (
+              <Card key={review.id} className="p-6 transition-all duration-200 hover:shadow-lg">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="mb-2 flex items-center gap-3">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-purple-600 text-sm font-bold text-white">
+                        {review.name.charAt(0).toUpperCase()}
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <h4 className="font-semibold text-gray-900">{review.name}</h4>
+                          <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
+                            review.status === 'approved' 
+                              ? 'bg-green-100 text-green-800' 
+                              : review.status === 'rejected'
+                              ? 'bg-red-100 text-red-800'
+                              : 'bg-yellow-100 text-yellow-800'
+                          }`}>
+                            {review.status.toUpperCase()}
+                          </span>
+                        </div>
+                        <p className="text-xs text-gray-500">
+                          {new Date(review.createdAt).toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric'
+                          })}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="mb-3">
+                      {renderStars(Number(review.rating))}
+                    </div>
+                    <p className="text-gray-700 leading-relaxed">{review.description}</p>
+                  </div>
+                </div>
+              </Card>
+            ))}
+          </div>
+        )}
+
+        {/* Average Rating Summary */}
+        {reviews.length > 0 && (
+          <Card className="bg-gradient-to-br from-blue-50 to-purple-50 p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Average Rating</p>
+                <div className="mt-1 flex items-center gap-2">
+                  <span className="text-3xl font-bold text-gray-900">
+                    {(reviews.reduce((sum, r) => sum + Number(r.rating), 0) / reviews.length).toFixed(1)}
+                  </span>
+                  <div>
+                    {renderStars(Math.round(reviews.reduce((sum, r) => sum + Number(r.rating), 0) / reviews.length))}
+                    <p className="text-xs text-gray-500">{reviews.length} reviews</p>
+                  </div>
+                </div>
+              </div>
+              <div className="text-right">
+                <p className="text-sm font-medium text-gray-600">Rating Distribution</p>
+                <div className="mt-2 space-y-1">
+                  {[5, 4, 3, 2, 1].map((star) => {
+                    const count = reviews.filter((r) => Number(r.rating) === star).length
+                    const percentage = reviews.length > 0 ? (count / reviews.length) * 100 : 0
+                    return (
+                      <div key={star} className="flex items-center gap-2 text-xs">
+                        <span className="w-8 text-gray-600">{star} ★</span>
+                        <div className="h-2 w-24 overflow-hidden rounded-full bg-gray-200">
+                          <div
+                            className="h-full bg-yellow-400 transition-all duration-300"
+                            style={{ width: `${percentage}%` }}
+                          />
+                        </div>
+                        <span className="w-8 text-gray-600">{count}</span>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            </div>
+          </Card>
+        )}
       </div>
     </div>
   )

@@ -178,35 +178,88 @@ export default function Home() {
       {/* Banners - Featured Collections */}
       {banners.length > 0 && (
         <section>
-          <div className="mb-12 flex items-center justify-between">
+          <div className="mb-12 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
             <div>
-              <h2 className="mb-2 text-4xl font-bold text-gray-900 md:text-5xl">Featured Collections</h2>
-              <p className="text-lg text-gray-600">Curated selections of our finest works</p>
+              <h2 className="mb-2 text-4xl font-bold text-gray-900 md:text-5xl">✨ Featured Collections</h2>
+              <p className="text-lg text-gray-600">Curated selections of our finest works - Click to explore</p>
             </div>
+            <Link to="/products">
+              <Button variant="outline" className="flex items-center gap-2">
+                View All
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </Button>
+            </Link>
           </div>
-          <div className="custom-scrollbar flex gap-6 overflow-x-auto pb-6">
+          <div className="custom-scrollbar flex gap-6 overflow-x-auto pb-6 snap-x snap-mandatory">
             {banners.map((b, idx) => (
-              <div 
+              <Link 
                 key={b.id} 
-                className="group relative flex-shrink-0 overflow-hidden rounded-3xl shadow-xl transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl"
+                to="/products"
+                className="group relative flex-shrink-0 overflow-hidden rounded-3xl shadow-xl transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl animate-fade-in snap-center"
                 style={{ animationDelay: `${idx * 100}ms` }}
               >
                 <img
                   src={toImageUrl(b.image)}
-                  alt="featured collection"
+                  alt={`Featured collection ${idx + 1}`}
                   className="h-72 w-[28rem] object-cover transition-transform duration-700 group-hover:scale-110"
                   onError={(e) => {
-                    e.currentTarget.src = getPlaceholderImage(600, 300, 'Featured')
+                    e.currentTarget.src = getPlaceholderImage(600, 300, 'Featured Collection')
                   }}
+                  loading="lazy"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100"></div>
-                <div className="absolute bottom-0 left-0 right-0 translate-y-full p-6 transition-transform duration-500 group-hover:translate-y-0">
-                  <h3 className="text-2xl font-bold text-white">Explore Collection</h3>
-                  <p className="text-sm text-white/90">Discover amazing crafts</p>
+                {/* Dark overlay - always visible but stronger on hover */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent transition-opacity duration-500 group-hover:from-black/80 group-hover:via-black/40"></div>
+                
+                {/* Content overlay */}
+                <div className="absolute inset-0 flex flex-col justify-end p-6">
+                  {/* Badge */}
+                  <div className="mb-3 inline-flex w-fit items-center gap-2 rounded-full bg-white/20 px-3 py-1 backdrop-blur-md">
+                    <span className="relative flex h-2 w-2">
+                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-yellow-400 opacity-75"></span>
+                      <span className="relative inline-flex h-2 w-2 rounded-full bg-yellow-300"></span>
+                    </span>
+                    <span className="text-xs font-semibold text-white">Featured</span>
+                  </div>
+                  
+                  {/* Title */}
+                  <h3 className="mb-2 text-2xl font-bold text-white transition-all duration-300 group-hover:scale-105">
+                    Explore Collection
+                  </h3>
+                  
+                  {/* Description */}
+                  <p className="mb-4 text-sm text-white/90">
+                    Discover amazing handcrafted products
+                  </p>
+                  
+                  {/* Call to action button */}
+                  <div className="flex items-center gap-2 text-white transition-all duration-300 group-hover:gap-3">
+                    <span className="text-sm font-semibold">Shop Now</span>
+                    <svg className="h-5 w-5 transition-transform duration-300 group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                    </svg>
+                  </div>
                 </div>
-              </div>
+                
+                {/* Corner accent */}
+                <div className="absolute right-0 top-0 h-24 w-24 translate-x-8 -translate-y-8 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 opacity-0 blur-2xl transition-all duration-500 group-hover:opacity-60"></div>
+              </Link>
             ))}
           </div>
+          
+          {/* Scroll hint */}
+          {banners.length > 2 && (
+            <div className="mt-4 flex items-center justify-center gap-2 text-sm text-gray-500">
+              <svg className="h-5 w-5 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16l-4-4m0 0l4-4m-4 4h18" />
+              </svg>
+              <span>Scroll to see more</span>
+              <svg className="h-5 w-5 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+              </svg>
+            </div>
+          )}
         </section>
       )}
 

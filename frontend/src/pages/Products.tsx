@@ -70,7 +70,8 @@ export default function Products() {
   }
 
   const getProductReviews = (productId: number) => {
-    return reviews.filter(r => r.productId === productId && r.status === 'approved')
+    // Show ALL reviews (not just approved)
+    return reviews.filter(r => r.productId === productId)
   }
 
   const getAverageRating = (productId: number) => {
@@ -210,11 +211,22 @@ export default function Products() {
 
                         {/* Latest Review Preview */}
                         <div className="rounded-lg bg-gray-50 p-2.5 transition-colors group-hover:bg-blue-50">
+                          <div className="mb-1 flex items-center gap-1.5">
+                            <p className="text-xs font-semibold text-gray-900">
+                              {productReviews[0].name}
+                            </p>
+                            <span className={`inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-medium ${
+                              productReviews[0].status === 'approved' 
+                                ? 'bg-green-100 text-green-700' 
+                                : productReviews[0].status === 'rejected'
+                                ? 'bg-red-100 text-red-700'
+                                : 'bg-yellow-100 text-yellow-700'
+                            }`}>
+                              {productReviews[0].status.toUpperCase()}
+                            </span>
+                          </div>
                           <p className="line-clamp-2 text-xs leading-relaxed text-gray-600">
                             "{productReviews[0].description}"
-                          </p>
-                          <p className="mt-1.5 text-xs font-semibold text-gray-900">
-                            - {productReviews[0].name}
                           </p>
                         </div>
                       </div>
