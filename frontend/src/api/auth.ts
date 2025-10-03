@@ -19,8 +19,16 @@ export const AuthApi = {
     if (token) localStorage.setItem('auth_token', token)
     return res.data
   },
-  logout() {
-    localStorage.removeItem('auth_token')
+  async logout() {
+    try {
+      // Call the backend logout endpoint to invalidate the token
+      await api.post(endpoints.logout)
+    } catch (error) {
+      console.error('Logout error:', error)
+    } finally {
+      // Always remove the token from localStorage
+      localStorage.removeItem('auth_token')
+    }
   },
 }
 

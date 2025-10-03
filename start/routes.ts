@@ -37,8 +37,12 @@ Route.get('health', async ({ response }) => {
 Route.group(() => {
   //auth 
   Route.get('/users/exclude-current', 'AuthController.getAllExceptCurrent')
+  Route.get('/users/profile', 'AuthController.getProfile')
+  Route.put('/users/profile', 'AuthController.updateProfile')
+  Route.put('/users/password', 'AuthController.changePassword')
   Route.put('/users/:id', 'AuthController.update')
   Route.delete('/users/:id', 'AuthController.destroy')
+  Route.post('/logout', 'AuthController.logout')
   // Categories
   Route.post('/categories', 'CategoriesController.store')
   Route.get('/categories', 'CategoriesController.index')
@@ -52,8 +56,11 @@ Route.group(() => {
   Route.delete('/productImages/:id', 'ProductsController.deleteImage')
   //reviews
   Route.get('/reviews', 'ReviewsController.index')
+  Route.get('/reviews/user', 'ReviewsController.getUserReviews')
   Route.put('/reviews/:id', 'ReviewsController.update')
+  Route.put('/reviews/user/:id', 'ReviewsController.updateUserReview')
   Route.delete('/reviews/:id', 'ReviewsController.destroy')
+  Route.delete('/reviews/user/:id', 'ReviewsController.deleteUserReview')
   // Banners
   Route.post('/banners', 'BannersController.store')
   Route.get('/banners', 'BannersController.index')
@@ -65,6 +72,7 @@ Route.group(() => {
   Route.delete('/complaints/:id', 'ComplaintsController.destroy')
   Route.post("/complaints/send-mail", "ComplaintsController.sendEmail")
   //order
+  Route.get('/orders', 'OrdersController.getUserOrders')
   Route.put('/admin/orders/:id', 'OrdersController.updateOrderStatus')
   Route.put('/admin/orders/:id/:paymentStatus', 'OrdersController.updatePaymentStatus')
   Route.post("/orders/pagination", "OrdersController.pagination")
@@ -72,6 +80,7 @@ Route.group(() => {
   Route.get('/products/getStatistics', 'AdminDashboardsController.getStatistics')
   Route.post('/verify-password', 'AdminDashboardsController.verifyPassword')
   Route.post('/forgot-password', 'AdminDashboardsController.forgotPassword')
+  Route.post('/reset-password', 'AuthController.resetPassword')
   //Notificatons
   Route.get('/notifications', 'NotificationsController.index')
   Route.post('/notifications', 'NotificationsController.create')
@@ -86,9 +95,11 @@ Route.post('/register', 'AuthController.register')
 Route.post('/login', 'AuthController.login')
 
 // Categories endpoint for public user
+Route.get('/categories/:id/products', 'ProductsController.getByCategory')
 Route.get('/categories', 'CategoriesController.index')
 
 // Products endpoint for public user
+Route.get('/products/search', 'ProductsController.search')
 Route.get('/products/:id', 'ProductsController.show')
 Route.get("/products", "ProductsController.pagination")
 

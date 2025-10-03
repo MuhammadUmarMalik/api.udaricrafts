@@ -43,6 +43,8 @@ export default function Products() {
   const [reviews, setReviews] = useState<Review[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [searching, setSearching] = useState(false)
 
   useEffect(() => {
     Promise.all([
@@ -68,10 +70,43 @@ export default function Products() {
 
   const filterByCategory = (categoryId: number | null) => {
     setSelectedCategory(categoryId)
+    setSearchQuery('') // Clear search when filtering
     if (categoryId === null) {
       setProducts(allProducts)
     } else {
       setProducts(allProducts.filter(p => p.category === categoryId))
+    }
+  }
+
+  const handleSearch = async (query: string) => {
+    setSearchQuery(query)
+    
+    if (!query.trim()) {
+      // If search is empty, show all products or filtered by category
+      if (selectedCategory !== null) {
+        setProducts(allProducts.filter(p => p.category === selectedCategory))
+      } else {
+        setProducts(allProducts)
+      }
+      return
+    }
+
+    try {
+      setSearching(true)
+      const response = await api.get(`${endpoints.productsSearch}?q=${encodeURIComponent(query)}`)
+      const searchResults = (response.data as any).data || []
+      
+      // If category is selected, filter search results by category
+      if (selectedCategory !== null) {
+        setProducts(searchResults.filter((p: Product) => p.category === selectedCategory))
+      } else {
+        setProducts(searchResults)
+      }
+    } catch (err) {
+      console.error('Search failed:', err)
+      setProducts([])
+    } finally {
+      setSearching(false)
     }
   }
 
@@ -100,11 +135,43 @@ export default function Products() {
 
   return (
     <div className="space-y-6">
-      {/* Header with Filter */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h2 className="text-3xl font-bold text-gray-900">All Products</h2>
-          <p className="text-sm text-gray-500">{products.length} products found</p>
+      {/* Header */}
+      <div>
+        <h2 className="text-3xl font-bold text-gray-900">All Products</h2>
+        <p className="text-sm text-gray-500">
+          {products.length} products found
+          {searching && ' (searching...)'}
+        </p>
+      </div>
+
+      {/* Search and Filter Row */}
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
+        {/* Search Bar */}
+        <div className="relative flex-1">
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Search products..."
+              value={searchQuery}
+              onChange={(e) => handleSearch(e.target.value)}
+              className="w-full rounded-lg border border-gray-300 bg-white py-2.5 pl-10 pr-4 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+            />
+            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+              <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+            {searchQuery && (
+              <button
+                onClick={() => handleSearch('')}
+                className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600"
+              >
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            )}
+          </div>
         </div>
         
         {/* Category Filter Dropdown */}

@@ -15,7 +15,8 @@ import {
   MenuIcon,
   CloseIcon,
   ChevronLeftIcon,
-  ChevronRightIcon
+  ChevronRightIcon,
+  UserIcon
 } from '../../components/Icons'
 
 export default function AdminLayout() {
@@ -30,6 +31,11 @@ export default function AdminLayout() {
       label: 'Dashboard', 
       icon: <DashboardIcon className="h-5 w-5" />,
       exact: true 
+    },
+    { 
+      path: '/admin/profile', 
+      label: 'Profile', 
+      icon: <UserIcon className="h-5 w-5" />
     },
     { 
       path: '/admin/products', 

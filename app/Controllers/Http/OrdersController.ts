@@ -633,6 +633,32 @@ export default class OrderController {
             })
         }
     }
+
+    // Get authenticated user's orders
+    public async getUserOrders({ auth, response }: HttpContextContract) {
+        try {
+            const user = auth.user
+            if (!user) {
+                return response.status(401).json({ message: 'User not authenticated' })
+            }
+
+            const orders = await Order.query()
+                .where('email', user.email)
+                .preload('orderItems', (orderItemsQuery) => {
+                    orderItemsQuery.preload('product')
+                })
+                .preload('paymentDetails')
+                .orderBy('created_at', 'desc')
+
+            return response.send(Response('User orders fetched successfully', orders))
+        } catch (error) {
+            console.error('❌ Error fetching user orders:', error)
+            return response.status(500).json({ 
+                message: 'Failed to fetch user orders', 
+                error: error.message 
+            })
+        }
+    }
 }
 
 

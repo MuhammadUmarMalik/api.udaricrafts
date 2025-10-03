@@ -262,6 +262,91 @@ export default class ProductsController {
             return response.status(404).send(Response('Product image not found', error))
         }
     }
+
+    // Search products by keyword
+    public async search({ request, response }: HttpContextContract) {
+        try {
+            const { q } = request.qs()
+            
+            if (!q) {
+                return response.status(400).json({ 
+                    message: 'Search query parameter "q" is required' 
+                })
+            }
+
+            const products = await Product.query()
+                .where('name', 'like', `%${q}%`)
+                .orWhere('description', 'like', `%${q}%`)
+                .preload('images')
+                .orderBy('created_at', 'desc')
+
+            const data = products.map((product) => {
+                return {
+                    id: product.id,
+                    name: product.name,
+                    category: product.categoryId,
+                    description: product.description,
+                    story: product.story,
+                    size: product.sizes,
+                    color: product.colors,
+                    discount: product.discount,
+                    price: product.price,
+                    quantity: product.quantity,
+                    images: product.images ? product.images.map((image) => ({
+                        id: image.id,
+                        path: image.path,
+                        productId: image.productId
+                    })) : [],
+                    created_at: product.createdAt,
+                    updated_at: product.updatedAt,
+                }
+            })
+
+            return response.send(Response(`Found ${data.length} products`, data))
+        } catch (error) {
+            console.log(error)
+            return response.status(500).send(error)
+        }
+    }
+
+    // Get products by category
+    public async getByCategory({ params, response }: HttpContextContract) {
+        try {
+            const categoryId = params.id
+
+            const products = await Product.query()
+                .where('category_id', categoryId)
+                .preload('images')
+                .orderBy('created_at', 'desc')
+
+            const data = products.map((product) => {
+                return {
+                    id: product.id,
+                    name: product.name,
+                    category: product.categoryId,
+                    description: product.description,
+                    story: product.story,
+                    size: product.sizes,
+                    color: product.colors,
+                    discount: product.discount,
+                    price: product.price,
+                    quantity: product.quantity,
+                    images: product.images ? product.images.map((image) => ({
+                        id: image.id,
+                        path: image.path,
+                        productId: image.productId
+                    })) : [],
+                    created_at: product.createdAt,
+                    updated_at: product.updatedAt,
+                }
+            })
+
+            return response.send(Response(`Found ${data.length} products in category`, data))
+        } catch (error) {
+            console.log(error)
+            return response.status(500).send(error)
+        }
+    }
 }
 
 

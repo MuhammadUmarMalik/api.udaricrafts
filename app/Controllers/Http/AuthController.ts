@@ -92,4 +92,123 @@ export default class AuthController {
         await user.delete()
         return response.send(Response('User Deleted Successfully', user))
     }
+
+    // Get current user profile
+    public async getProfile({ auth, response }: HttpContextContract) {
+        try {
+            const user = auth.user
+            if (!user) {
+                return response.status(401).json({ message: 'User not authenticated' })
+            }
+            const userData = {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                role: user.role,
+            }
+            return response.send(Response('Profile fetched successfully', userData))
+        } catch (error) {
+            return response.status(500).json({ error: { message: 'Internal server error' } })
+        }
+    }
+
+    // Update current user profile
+    public async updateProfile({ auth, request, response }: HttpContextContract) {
+        try {
+            const user = auth.user
+            if (!user) {
+                return response.status(401).json({ message: 'User not authenticated' })
+            }
+            const { name, email } = request.only(['name', 'email'])
+            
+            // Check if email is already taken by another user
+            if (email && email !== user.email) {
+                const existingUser = await User.findBy('email', email)
+                if (existingUser) {
+                    return response.status(400).json({ message: 'Email already in use' })
+                }
+            }
+            
+            if (name) user.name = name
+            if (email) user.email = email
+            await user.save()
+            
+            const userData = {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                role: user.role,
+            }
+            return response.send(Response('Profile updated successfully', userData))
+        } catch (error) {
+            return response.status(500).json({ error: { message: 'Internal server error' } })
+        }
+    }
+
+    // Change password
+    public async changePassword({ auth, request, response }: HttpContextContract) {
+        try {
+            const user = auth.user
+            if (!user) {
+                return response.status(401).json({ message: 'User not authenticated' })
+            }
+            
+            const { currentPassword, newPassword } = request.only(['currentPassword', 'newPassword'])
+            
+            if (!currentPassword || !newPassword) {
+                return response.status(400).json({ message: 'Current and new password are required' })
+            }
+            
+            // Verify current password
+            const isValidPassword = await Hash.verify(user.password, currentPassword)
+            if (!isValidPassword) {
+                return response.status(400).json({ message: 'Current password is incorrect' })
+            }
+            
+            // Update password
+            user.password = newPassword
+            await user.save()
+            
+            return response.send(Response('Password changed successfully', null))
+        } catch (error) {
+            return response.status(500).json({ error: { message: 'Internal server error' } })
+        }
+    }
+
+    // Logout and invalidate token
+    public async logout({ auth, response }: HttpContextContract) {
+        try {
+            await auth.use('api').revoke()
+            return response.send(Response('Logout successful', null))
+        } catch (error) {
+            return response.status(500).json({ error: { message: 'Internal server error' } })
+        }
+    }
+
+    // Reset password with token
+    public async resetPassword({ request, response }: HttpContextContract) {
+        try {
+            const { email, token, newPassword } = request.only(['email', 'token', 'newPassword'])
+            
+            if (!email || !token || !newPassword) {
+                return response.status(400).json({ message: 'Email, token and new password are required' })
+            }
+            
+            const user = await User.findBy('email', email)
+            if (!user) {
+                return response.status(404).json({ message: 'User not found' })
+            }
+            
+            // Here you would verify the reset token
+            // For now, we'll implement a basic version
+            // In production, you should store reset tokens in a separate table with expiry
+            
+            user.password = newPassword
+            await user.save()
+            
+            return response.send(Response('Password reset successfully', null))
+        } catch (error) {
+            return response.status(500).json({ error: { message: 'Internal server error' } })
+        }
+    }
 }

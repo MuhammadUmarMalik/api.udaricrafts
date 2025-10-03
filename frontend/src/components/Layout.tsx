@@ -93,12 +93,15 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                       Admin Panel
                     </Link>
                   )}
-                  <div className="hidden items-center gap-2 rounded-md border border-gray-200 px-3 py-1.5 sm:flex">
-                    <div className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-100 text-xs font-semibold text-blue-700">
-                      {user?.name?.charAt(0).toUpperCase() || 'U'}
-                    </div>
-                    <span className="text-sm font-medium text-gray-700">{user?.name}</span>
-                  </div>
+                  <Link
+                    to={isAdmin ? "/admin/profile" : "/profile"}
+                    className={`flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+                      isActive('/profile') || isActive('/admin/profile') ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                    }`}
+                  >
+                    <UserIcon className="h-4 w-4" />
+                    <span className="hidden sm:inline">Profile</span>
+                  </Link>
                   <button
                     onClick={logout}
                     className="flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors"
@@ -159,7 +162,18 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 {isAuthenticated ? (
                   <>
                     <li><span className="text-gray-900">Hi, {user?.name}!</span></li>
-                    {isAdmin && <li><Link to="/admin" className="hover:text-blue-600">Admin Panel</Link></li>}
+                    {isAdmin ? (
+                      <>
+                        <li><Link to="/admin/profile" className="hover:text-blue-600">Admin Profile</Link></li>
+                        <li><Link to="/admin" className="hover:text-blue-600">Admin Panel</Link></li>
+                      </>
+                    ) : (
+                      <>
+                        <li><Link to="/profile" className="hover:text-blue-600">My Profile</Link></li>
+                        <li><Link to="/profile/orders" className="hover:text-blue-600">My Orders</Link></li>
+                        <li><Link to="/profile/reviews" className="hover:text-blue-600">My Reviews</Link></li>
+                      </>
+                    )}
                     <li><button onClick={logout} className="hover:text-blue-600">Logout</button></li>
                   </>
                 ) : (

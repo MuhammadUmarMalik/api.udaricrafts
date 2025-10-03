@@ -10,8 +10,14 @@ import PaymentCancel from './pages/PaymentCancel'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import Complaint from './pages/Complaint'
+import Profile from './pages/Profile'
+import ChangePassword from './pages/ChangePassword'
+import MyOrders from './pages/MyOrders'
+import MyReviews from './pages/MyReviews'
 import AdminLayout from './pages/admin/AdminLayout'
 import Dashboard from './pages/admin/Dashboard'
+import AdminProfile from './pages/admin/AdminProfile'
+import AdminChangePassword from './pages/admin/AdminChangePassword'
 import ProductsAdmin from './pages/admin/ProductsAdmin'
 import CategoriesAdmin from './pages/admin/CategoriesAdmin'
 import OrdersAdmin from './pages/admin/OrdersAdmin'
@@ -39,6 +45,40 @@ export default function App() {
       <Route element={<Layout><Register /></Layout>} path="/register" />
       <Route element={<Layout><Complaint /></Layout>} path="/complaint" />
 
+      {/* User Profile Routes - Protected */}
+      <Route 
+        path="/profile" 
+        element={
+          <ProtectedRoute>
+            <Layout><Profile /></Layout>
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/profile/password" 
+        element={
+          <ProtectedRoute>
+            <Layout><ChangePassword /></Layout>
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/profile/orders" 
+        element={
+          <ProtectedRoute>
+            <Layout><MyOrders /></Layout>
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/profile/reviews" 
+        element={
+          <ProtectedRoute>
+            <Layout><MyReviews /></Layout>
+          </ProtectedRoute>
+        } 
+      />
+
       {/* Admin Routes - Separate Layout */}
       <Route
         path="/admin"
@@ -49,6 +89,8 @@ export default function App() {
         }
       >
         <Route index element={<Dashboard />} />
+        <Route path="profile" element={<AdminProfile />} />
+        <Route path="profile/password" element={<AdminChangePassword />} />
         <Route path="products" element={<ProductsAdmin />} />
         <Route path="categories" element={<CategoriesAdmin />} />
         <Route path="orders" element={<OrdersAdmin />} />
