@@ -5,8 +5,121 @@ import Database from '@ioc:Adonis/Lucid/Database'
 import User from 'App/Models/User'
 import { Response } from 'App/Utils/ApiUtil'
 export default class AdminDashboardController {
-    public async getStatistics({ response }: HttpContextContract) {
+    
+    private getRevenueChartQuery(period: string) {
+        if (period === 'daily') {
+            // Last 7 days
+            return Database.raw(`
+                SELECT 
+                    DATE(created_at) as date,
+                    SUM(total) as revenue,
+                    COUNT(*) as orders
+                FROM orders
+                WHERE created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+                GROUP BY DATE(created_at)
+                ORDER BY date ASC
+            `)
+        } else if (period === 'weekly') {
+            // Last 8 weeks
+            return Database.raw(`
+                SELECT 
+                    DATE(DATE_SUB(created_at, INTERVAL WEEKDAY(created_at) DAY)) as date,
+                    SUM(total) as revenue,
+                    COUNT(*) as orders
+                FROM orders
+                WHERE created_at >= DATE_SUB(NOW(), INTERVAL 8 WEEK)
+                GROUP BY YEARWEEK(created_at)
+                ORDER BY date ASC
+            `)
+        } else {
+            // Last 12 months
+            return Database.raw(`
+                SELECT 
+                    DATE(DATE_FORMAT(created_at, '%Y-%m-01')) as date,
+                    SUM(total) as revenue,
+                    COUNT(*) as orders
+                FROM orders
+                WHERE created_at >= DATE_SUB(NOW(), INTERVAL 12 MONTH)
+                GROUP BY YEAR(created_at), MONTH(created_at)
+                ORDER BY date ASC
+            `)
+        }
+    }
+    
+    private processRevenueData(revenueData: any[], period: string) {
+        const processedData: any[] = []
+        
+        if (period === 'daily') {
+            // Ensure all 7 days are present
+            for (let i = 6; i >= 0; i--) {
+                const date = new Date()
+                date.setDate(date.getDate() - i)
+                const dateStr = date.toISOString().split('T')[0]
+                
+                const existingData = revenueData.find((item: any) => {
+                    const itemDate = new Date(item.date).toISOString().split('T')[0]
+                    return itemDate === dateStr
+                })
+                
+                processedData.push({
+                    date: dateStr,
+                    label: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+                    revenue: existingData ? Number(existingData.revenue) || 0 : 0,
+                    orders: existingData ? Number(existingData.orders) || 0 : 0
+                })
+            }
+        } else if (period === 'weekly') {
+            // Last 8 weeks
+            for (let i = 7; i >= 0; i--) {
+                const date = new Date()
+                date.setDate(date.getDate() - (i * 7))
+                // Get Monday of that week
+                const monday = new Date(date)
+                monday.setDate(date.getDate() - date.getDay() + 1)
+                const dateStr = monday.toISOString().split('T')[0]
+                
+                const existingData = revenueData.find((item: any) => {
+                    const itemDate = new Date(item.date).toISOString().split('T')[0]
+                    return itemDate === dateStr
+                })
+                
+                processedData.push({
+                    date: dateStr,
+                    label: `Week ${8 - i}`,
+                    revenue: existingData ? Number(existingData.revenue) || 0 : 0,
+                    orders: existingData ? Number(existingData.orders) || 0 : 0
+                })
+            }
+        } else {
+            // Last 12 months
+            for (let i = 11; i >= 0; i--) {
+                const date = new Date()
+                date.setMonth(date.getMonth() - i)
+                date.setDate(1)
+                const dateStr = date.toISOString().split('T')[0]
+                
+                const existingData = revenueData.find((item: any) => {
+                    const itemDate = new Date(item.date)
+                    return itemDate.getFullYear() === date.getFullYear() && 
+                           itemDate.getMonth() === date.getMonth()
+                })
+                
+                processedData.push({
+                    date: dateStr,
+                    label: date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
+                    revenue: existingData ? Number(existingData.revenue) || 0 : 0,
+                    orders: existingData ? Number(existingData.orders) || 0 : 0
+                })
+            }
+        }
+        
+        return processedData
+    }
+    
+    public async getStatistics({ request, response }: HttpContextContract) {
         try {
+            // Get the period parameter (default to 'daily')
+            const period = request.input('period', 'daily') // 'daily', 'weekly', 'monthly'
             // Get total counts
             const [
                 totalProducts,
@@ -85,17 +198,8 @@ export default class AdminDashboardController {
                     .orderBy('created_at', 'desc')
                     .limit(5),
                 
-                // Chart data: Last 7 days revenue
-                Database.raw(`
-                    SELECT 
-                        DATE(created_at) as date,
-                        SUM(total) as revenue,
-                        COUNT(*) as orders
-                    FROM orders
-                    WHERE created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
-                    GROUP BY DATE(created_at)
-                    ORDER BY date ASC
-                `),
+                // Chart data: Revenue based on period
+                this.getRevenueChartQuery(period),
                 
                 // Chart data: Orders by status
                 Database.from('orders')
@@ -120,6 +224,18 @@ export default class AdminDashboardController {
                 if (previous === 0) return current > 0 ? 100 : 0
                 return ((current - previous) / previous * 100).toFixed(1)
             }
+
+            // Process revenue chart data based on period
+            const revenueData = Array.isArray(last7DaysRevenue[0]) ? last7DaysRevenue[0] : []
+            console.log('Raw revenue data from DB:', JSON.stringify(revenueData))
+            console.log('Period requested:', period)
+            
+            const processedRevenueData = this.processRevenueData(revenueData, period)
+            console.log('Processed revenue data:', JSON.stringify(processedRevenueData))
+
+            // Process category chart data
+            const categoryData = Array.isArray(productsByCategory[0]) ? productsByCategory[0] : []
+            console.log('Raw category data from DB:', JSON.stringify(categoryData))
 
             const stats = {
                 totalProducts: Number(totalProducts[0].total) || 0,
@@ -149,12 +265,16 @@ export default class AdminDashboardController {
                 recentReviews: recentReviews,
                 
                 // Chart data
-                revenueChart: last7DaysRevenue[0] || [],
+                revenueChart: processedRevenueData,
+                period: period,
                 orderStatusChart: ordersByStatus.map((item: any) => ({
                     status: item.status || 'Unknown',
                     count: Number(item.count) || 0
                 })),
-                categoryChart: productsByCategory[0] || []
+                categoryChart: categoryData.map((item: any) => ({
+                    category: item.category || 'Uncategorized',
+                    count: Number(item.count) || 0
+                }))
             }
 
             return response.send(Response("Statistics", stats))

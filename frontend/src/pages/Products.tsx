@@ -82,8 +82,11 @@ export default function Products() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <Spinner size="lg" className="text-blue-600" />
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <div className="text-center">
+          <Spinner size="lg" className="text-blue-600" />
+          <p className="mt-4 text-sm text-gray-500">Loading products...</p>
+        </div>
       </div>
     )
   }
@@ -151,13 +154,13 @@ export default function Products() {
             const avgRating = getAverageRating(p.id)
             
             return (
-              <Link key={p.id} to={`/products/${p.id}`}>
-                <Card className="group flex h-full flex-col overflow-hidden border-0 shadow-md transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
+              <Link key={p.id} to={`/products/${p.id}`} className="group">
+                <Card className="flex h-full flex-col overflow-hidden border-0 shadow-md transition-all duration-300 group-hover:-translate-y-2 group-hover:shadow-2xl">
                   <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200">
                     <img
                       src={imageUrl}
                       alt={p.name}
-                      className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"
+                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
                       onError={(e) => {
                         const target = e.currentTarget
                         target.src = getPlaceholderImage(400, 400, p.name)
@@ -166,7 +169,7 @@ export default function Products() {
                       loading="lazy"
                     />
                     {p.discount && p.discount > 0 && (
-                      <div className="absolute right-3 top-3 flex items-center gap-1 rounded-full bg-gradient-to-r from-red-500 to-red-600 px-3 py-1.5 text-xs font-bold text-white shadow-lg">
+                      <div className="absolute right-3 top-3 flex items-center gap-1.5 rounded-full bg-gradient-to-r from-red-500 to-red-600 px-3 py-1.5 text-xs font-bold text-white shadow-lg transition-transform group-hover:scale-110">
                         <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
                           <path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z" />
                           <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.076-2.354-1.253V5z" clipRule="evenodd" />
@@ -174,10 +177,10 @@ export default function Products() {
                         -{p.discount}% OFF
                       </div>
                     )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100"></div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100"></div>
                   </div>
-                  <div className="flex flex-1 flex-col p-4">
-                    <h3 className="mb-2 line-clamp-2 text-base font-semibold text-gray-900 transition-colors group-hover:text-blue-600">
+                  <div className="flex flex-1 flex-col p-5">
+                    <h3 className="mb-3 line-clamp-2 text-lg font-bold text-gray-900 transition-colors duration-300 group-hover:text-blue-600">
                       {p.name}
                     </h3>
 
@@ -186,11 +189,11 @@ export default function Products() {
                       <div className="mb-3 space-y-2">
                         {/* Average Rating */}
                         <div className="flex items-center gap-2">
-                          <div className="flex items-center gap-1">
+                          <div className="flex items-center gap-0.5">
                             {[1, 2, 3, 4, 5].map((star) => (
                               <svg
                                 key={star}
-                                className={`h-4 w-4 ${
+                                className={`h-4 w-4 transition-transform group-hover:scale-110 ${
                                   star <= Number(avgRating)
                                     ? 'fill-yellow-400 text-yellow-400'
                                     : 'fill-gray-200 text-gray-200'
@@ -201,33 +204,33 @@ export default function Products() {
                               </svg>
                             ))}
                           </div>
-                          <span className="text-sm font-semibold text-gray-900">{avgRating}</span>
-                          <span className="text-xs text-gray-500">({productReviews.length})</span>
+                          <span className="text-sm font-bold text-gray-900">{avgRating}</span>
+                          <span className="text-xs text-gray-500">({productReviews.length} reviews)</span>
                         </div>
 
                         {/* Latest Review Preview */}
-                        <div className="rounded-lg bg-gray-50 p-2">
-                          <p className="line-clamp-2 text-xs text-gray-600">
+                        <div className="rounded-lg bg-gray-50 p-2.5 transition-colors group-hover:bg-blue-50">
+                          <p className="line-clamp-2 text-xs leading-relaxed text-gray-600">
                             "{productReviews[0].description}"
                           </p>
-                          <p className="mt-1 text-xs font-medium text-gray-900">
+                          <p className="mt-1.5 text-xs font-semibold text-gray-900">
                             - {productReviews[0].name}
                           </p>
                         </div>
                       </div>
                     ) : (
-                      <div className="mb-3">
+                      <div className="mb-3 rounded-lg border border-dashed border-gray-200 bg-gray-50 p-2 text-center">
                         <p className="text-xs text-gray-400">No reviews yet</p>
                       </div>
                     )}
 
-                    <div className="mt-auto flex items-center justify-between border-t pt-3">
-                      <span className="text-xl font-bold text-blue-600">
+                    <div className="mt-auto flex items-center justify-between border-t border-gray-100 pt-4">
+                      <span className="text-2xl font-bold text-blue-600">
                         Rs {p.price?.toLocaleString() || p.price}
                       </span>
-                      <div className="flex items-center gap-1 text-xs text-gray-500 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                      <div className="flex items-center gap-1.5 rounded-full bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-600 opacity-0 transition-all duration-300 group-hover:opacity-100">
                         <span>View</span>
-                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="h-4 w-4 transition-transform group-hover:translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                         </svg>
                       </div>

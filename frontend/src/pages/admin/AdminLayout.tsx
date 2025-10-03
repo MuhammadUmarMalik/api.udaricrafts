@@ -159,13 +159,13 @@ export default function AdminLayout() {
               <div className="flex gap-2">
                 <Link
                   to="/"
-                  className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-center text-xs font-medium text-gray-700 hover:bg-gray-50"
+                  className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-center text-xs font-medium text-gray-700 transition-all hover:bg-gray-50 hover:border-gray-400"
                 >
                   View Site
                 </Link>
                 <button
                   onClick={handleLogout}
-                  className="flex-1 rounded-lg bg-red-600 px-3 py-2 text-xs font-medium text-white hover:bg-red-700"
+                  className="flex-1 rounded-lg bg-red-600 px-3 py-2 text-xs font-medium text-white transition-all hover:bg-red-700 hover:shadow-md"
                 >
                   Logout
                 </button>
