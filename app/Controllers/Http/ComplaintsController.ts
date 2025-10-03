@@ -72,7 +72,17 @@ export default class ComplaintsController {
         } catch (error) {
             return response.status(500).send(Response('internal server error', error))
         }
+    }
 
+    public async destroy({ params, response }: HttpContextContract) {
+        try {
+            const complaint = await Complaint.findOrFail(params.id)
+            await complaint.delete()
+            return response.send(Response('Complaint Deleted Successfully', complaint))
+        } catch (error) {
+            console.log(error);
+            return response.status(404).send(Response('Complaint not found', error))
+        }
     }
 }
 

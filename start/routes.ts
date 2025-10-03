@@ -60,20 +60,22 @@ Route.group(() => {
   Route.put('/banners/:id', 'BannersController.update')
   Route.delete('/banners/:id', 'BannersController.destroy')
   // Complaints
-  Route.put('/complaints/:id', 'ComplaintsController.update')
-
-  Route.post("/complaints/send-mail", "ComplaintsController.sendEmail")
   Route.get('/complaints', 'ComplaintsController.index')
+  Route.put('/complaints/:id', 'ComplaintsController.update')
+  Route.delete('/complaints/:id', 'ComplaintsController.destroy')
+  Route.post("/complaints/send-mail", "ComplaintsController.sendEmail")
   //order
   Route.put('/admin/orders/:id', 'OrdersController.updateOrderStatus')
-  Route.put('/admin/orders/:id/:payment-status', 'OrdersController.updatePaymentStatus')
+  Route.put('/admin/orders/:id/:paymentStatus', 'OrdersController.updatePaymentStatus')
   Route.post("/orders/pagination", "OrdersController.pagination")
   //Dashboard Endpoints
   Route.get('/products/getStatistics', 'AdminDashboardsController.getStatistics')
   Route.post('/verify-password', 'AdminDashboardsController.verifyPassword')
   Route.post('/forgot-password', 'AdminDashboardsController.forgotPassword')
   //Notificatons
+  Route.get('/notifications', 'NotificationsController.index')
   Route.post('/notifications', 'NotificationsController.create')
+  Route.delete('/notifications/:id', 'NotificationsController.destroy')
   Route.patch('/notifications/:id/markAsRead', 'NotificationsController.markAsRead')
   Route.patch('/notifications/markAllAsRead', 'NotificationsController.markAllAsRead')
   Route.get('/notifications/unread', 'NotificationsController.getUnread')

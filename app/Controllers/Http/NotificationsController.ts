@@ -24,4 +24,23 @@ export default class NotificationsController {
         const unreadNotifications = await Notification.query().where('read', false)
         return response.status(200).json(unreadNotifications)
     }
+
+    public async index({ response }: HttpContextContract) {
+        try {
+            const notifications = await Notification.query().orderBy('created_at', 'desc')
+            return response.send(Response('Get All Notifications Successfully', notifications))
+        } catch (error) {
+            return response.status(500).send(Response('Failed to get notifications', error))
+        }
+    }
+
+    public async destroy({ params, response }: HttpContextContract) {
+        try {
+            const notification = await Notification.findOrFail(params.id)
+            await notification.delete()
+            return response.send(Response('Notification Deleted Successfully', notification))
+        } catch (error) {
+            return response.status(404).send(Response('Notification not found', error))
+        }
+    }
 }
