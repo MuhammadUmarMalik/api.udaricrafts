@@ -371,29 +371,57 @@ export default class OrderController {
         try {
             // Fetch the order and its items
             const orderId = params.id
+            console.log('📦 Creating checkout session for order ID:', orderId)
+            
             const order = await Order.query().where('id', orderId).preload('orderItems', (query) => {
                 query.preload('product')
             }).firstOrFail()
 
-            // Prepare line items for the checkout session
-            const lineItems = order.orderItems.map((orderItem) => ({
-                price_data: {
-                    currency: 'pkr',
-                    product_data: {
-                        name: orderItem.product.name,
-                    },
-                    unit_amount: orderItem.product.price * 100, // Stripe expects the amount in cents
-                },
-                quantity: orderItem.quantity,
-            }))
+            console.log('✅ Order found:', order.order_number, 'Total:', order.total)
+            console.log('📦 Order items count:', order.orderItems.length)
 
+            // Validate order has items
+            if (!order.orderItems || order.orderItems.length === 0) {
+                console.error('❌ Order has no items')
+                return response.status(400).json({ 
+                    error: 'Order has no items',
+                    message: 'Cannot create checkout session for empty order'
+                })
+            }
+
+            // Prepare line items for the checkout session
+            const lineItems = order.orderItems.map((orderItem) => {
+                console.log(`  - ${orderItem.product.name}: Rs ${orderItem.product.price} x ${orderItem.quantity}`)
+                return {
+                    price_data: {
+                        currency: 'pkr',
+                        product_data: {
+                            name: orderItem.product.name,
+                            description: `Order: ${order.order_number}`,
+                        },
+                        unit_amount: Math.round(orderItem.product.price * 100), // Stripe expects amount in cents (paisa)
+                    },
+                    quantity: orderItem.quantity,
+                }
+            })
+
+            console.log('💳 Creating Stripe checkout session...')
+
+            // Create Stripe checkout session
             const session = await stripe.checkout.sessions.create({
                 payment_method_types: ['card'],
                 line_items: lineItems,
                 mode: 'payment',
                 success_url: `${Env.get('FRONTEND_URL', 'http://localhost:5173')}/payment/success?session_id={CHECKOUT_SESSION_ID}&order_id=${orderId}`,
                 cancel_url: `${Env.get('FRONTEND_URL', 'http://localhost:5173')}/payment/cancel?order_id=${orderId}`,
+                customer_email: order.email,
+                metadata: {
+                    order_id: orderId.toString(),
+                    order_number: order.order_number,
+                },
             })
+
+            console.log('✅ Stripe session created:', session.id)
 
             // Update the payment details with the Stripe session ID
             const paymentDetail = await PaymentDetail.query().where('order_id', orderId).firstOrFail()
@@ -401,17 +429,42 @@ export default class OrderController {
             paymentDetail.status = 'pending' // Keep pending until payment is confirmed
             await paymentDetail.save()
 
-            console.log('💳 Stripe checkout session created:', session.id)
-            console.log('📋 Order ID:', orderId)
-            console.log('🔗 Payment URL:', session.url)
+            console.log('✅ Payment detail updated with session ID')
+            console.log('🔗 Checkout URL:', session.url)
 
             return response.status(201).json({
+                success: true,
                 id: session.id,
                 url: session.url,
+                order_id: orderId,
+                order_number: order.order_number
             })
         } catch (error) {
-            console.log(error)
-            return response.status(500).json({ error: error.message })
+            console.error('❌ Failed to create checkout session:', error)
+            console.error('Error details:', error.stack)
+            
+            // Check for specific Stripe errors
+            if (error.type === 'StripeInvalidRequestError') {
+                return response.status(400).json({ 
+                    error: 'Invalid payment request',
+                    message: error.message,
+                    details: 'Please check your Stripe configuration'
+                })
+            }
+
+            if (error.type === 'StripeAuthenticationError') {
+                return response.status(401).json({ 
+                    error: 'Stripe authentication failed',
+                    message: 'Invalid Stripe API key. Please check your .env file',
+                    details: error.message
+                })
+            }
+
+            return response.status(500).json({ 
+                error: 'Failed to create checkout session',
+                message: error.message,
+                details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+            })
         }
     }
 
@@ -479,6 +532,105 @@ export default class OrderController {
             }
         } catch (error) {
             return response.status(500).json({ message: 'An error occurred', error: error.message })
+        }
+    }
+
+    public async verifyPayment({ request, response }: HttpContextContract) {
+        try {
+            const { session_id, order_id } = request.qs()
+
+            if (!session_id || !order_id) {
+                console.error('❌ Missing parameters - session_id:', session_id, 'order_id:', order_id)
+                return response.status(400).json({ 
+                    success: false,
+                    message: 'Missing session_id or order_id' 
+                })
+            }
+
+            console.log('🔍 Verifying payment for order:', order_id, 'session:', session_id)
+
+            // Retrieve the session from Stripe
+            const session = await stripe.checkout.sessions.retrieve(session_id)
+
+            console.log('💳 Stripe session status:', session.payment_status)
+            console.log('💳 Stripe session payment_intent:', session.payment_intent)
+
+            // Check if payment was successful
+            if (session.payment_status === 'paid') {
+                // Find the payment detail - try with stripeSessionID first
+                let paymentDetail = await PaymentDetail.query()
+                    .where('order_id', order_id)
+                    .whereNotNull('stripe_session_id')
+                    .first()
+
+                if (!paymentDetail) {
+                    // If not found with session check, try just by order_id
+                    paymentDetail = await PaymentDetail.query()
+                        .where('order_id', order_id)
+                        .first()
+                }
+
+                if (!paymentDetail) {
+                    console.error('❌ Payment detail not found for order:', order_id)
+                    return response.status(404).json({
+                        success: false,
+                        message: 'Payment detail not found for this order'
+                    })
+                }
+
+                // Verify the session ID matches if it was previously set
+                if (paymentDetail.stripeSessionID && paymentDetail.stripeSessionID !== session_id) {
+                    console.error('❌ Session ID mismatch. Expected:', paymentDetail.stripeSessionID, 'Got:', session_id)
+                    return response.status(400).json({
+                        success: false,
+                        message: 'Session ID mismatch - potential fraud attempt'
+                    })
+                }
+
+                // Update payment status to paid
+                paymentDetail.status = 'paid'
+                paymentDetail.stripeSessionID = session_id // Ensure it's set
+                await paymentDetail.save()
+
+                console.log('✅ Payment detail updated:', paymentDetail.id)
+
+                // Get the order for the response
+                const order = await Order.query()
+                    .where('id', order_id)
+                    .firstOrFail()
+
+                console.log('✅ Payment verified and status updated to paid for order:', order.order_number)
+
+                return response.status(200).json({
+                    success: true,
+                    message: 'Payment verified successfully',
+                    order: {
+                        id: order.id,
+                        order_number: order.order_number,
+                        total: order.total,
+                        status: order.status
+                    },
+                    payment_status: 'paid'
+                })
+            } else {
+                console.log('⚠️ Payment not completed. Status:', session.payment_status)
+                
+                return response.status(400).json({
+                    success: false,
+                    message: 'Payment not completed',
+                    payment_status: session.payment_status
+                })
+            }
+        } catch (error) {
+            console.error('❌ Payment verification failed:', error)
+            console.error('Error details:', error.stack)
+            
+            return response.status(500).json({
+                success: false,
+                message: 'Payment verification failed',
+                error: error.message,
+                details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+            })
         }
     }
 }

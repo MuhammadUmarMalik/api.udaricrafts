@@ -98,16 +98,37 @@ export default function Checkout() {
     if (!validate()) return
     setLoading(true)
     try {
+      // Step 1: Create the order
+      console.log('📦 Creating order...')
       const products = items.map((i) => ({ productId: i.productId, name: i.name, buyingQuantity: i.quantity }))
       const res = await api.post(endpoints.orders, { ...form, products })
       const order = (res.data as any).data.order
+      
+      console.log('✅ Order created:', order.id, order.order_number)
+
+      // Step 2: Create Stripe checkout session
+      console.log('💳 Creating Stripe checkout session...')
+      const stripeRes = await api.post(endpoints.createCheckoutSession(order.id))
+      const { url } = (stripeRes.data as any)
+      
+      console.log('🔗 Stripe checkout URL:', url)
+      
+      // Clear cart before redirecting to Stripe
       clear()
-      navigate(`/order/${order.order_number}`)
-    } catch (e) {
-      setErrors({ submit: 'Failed to place order. Please try again.' })
-    } finally {
+      
+      // Step 3: Redirect to Stripe's hosted checkout page
+      if (url) {
+        console.log('🚀 Redirecting to Stripe...')
+        window.location.href = url
+      } else {
+        throw new Error('Failed to get Stripe checkout URL')
+      }
+    } catch (e: any) {
+      console.error('❌ Checkout error:', e)
+      setErrors({ submit: e.response?.data?.message || 'Failed to process payment. Please try again.' })
       setLoading(false)
     }
+    // Note: Don't set loading to false here because we're redirecting to Stripe
   }
 
   return (
@@ -333,8 +354,24 @@ export default function Checkout() {
               size="lg"
               disabled={loading || items.length === 0}
             >
-              {loading ? 'Placing Order...' : 'Place Order'}
+              {loading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <svg className="h-5 w-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Processing Payment...
+                </span>
+              ) : (
+                'Pay with Card'
+              )}
             </Button>
+            
+            {loading && (
+              <div className="mt-3 text-center text-xs text-gray-500">
+                <p>Please wait, redirecting to secure payment...</p>
+              </div>
+            )}
           </Card>
         </div>
       </div>

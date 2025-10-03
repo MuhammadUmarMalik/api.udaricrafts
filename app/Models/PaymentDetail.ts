@@ -18,10 +18,10 @@ export default class PaymentDetail extends BaseModel {
   @column()
   public status: string
 
-  @column()
+  @column({ columnName: 'stripe_session_id' })
   public stripeSessionID: string
 
-  @column()
+  @column({ columnName: 'jazzCashTransactionId' })
   public jazzCashTransactionId: string
 
   @column.dateTime({ autoCreate: true })

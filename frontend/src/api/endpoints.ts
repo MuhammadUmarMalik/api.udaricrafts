@@ -14,6 +14,7 @@ export const endpoints = {
   orderByNumber: (orderNumber: string) => `/orders/${orderNumber}`,
   createCheckoutSession: (orderId: number | string) => `/create-checkout-session/${orderId}`,
   createJazzCashCheckout: (orderId: number | string) => `/create-jazzcash-checkout/${orderId}`,
+  verifyPayment: '/verify-payment',
 
   // admin (all prefixed with /api)
   admin: {

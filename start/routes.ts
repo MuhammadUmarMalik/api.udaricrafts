@@ -105,5 +105,6 @@ Route.post('/orders', 'OrdersController.store')
 Route.get('/orders/:order_number', 'OrdersController.getOrderDetails')
 // stripe payment gateway
 Route.post('/create-checkout-session/:id', 'OrdersController.createCheckoutSession')
+Route.get('/verify-payment', 'OrdersController.verifyPayment')
 // Jazzcash  payment gateway
 Route.post('/create-jazzcash-checkout/:id', 'OrdersController.createJazzCashCheckout')
