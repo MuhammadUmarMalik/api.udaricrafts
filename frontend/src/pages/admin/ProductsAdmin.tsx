@@ -22,6 +22,12 @@ type ProductForm = {
   path: FileList | null
 }
 
+type ProductImage = {
+  id: number
+  path: string
+  productId: number
+}
+
 type Product = {
   id: number
   name: string
@@ -33,7 +39,7 @@ type Product = {
   discount: number
   price: number
   quantity: number
-  images: string[]
+  images: ProductImage[]
 }
 
 export default function ProductsAdmin() {
@@ -43,6 +49,7 @@ export default function ProductsAdmin() {
   const [showModal, setShowModal] = useState(false)
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  const [deletingImageId, setDeletingImageId] = useState<number | null>(null)
   const [form, setForm] = useState<ProductForm>({
     name: '',
     category_id: '',
@@ -155,6 +162,30 @@ export default function ProductsAdmin() {
     }
   }
 
+  const deleteImage = async (imageId: number) => {
+    if (!confirm('Are you sure you want to delete this image?')) return
+    setDeletingImageId(imageId)
+    try {
+      await api.delete(endpoints.admin.productImage(imageId))
+      
+      // Update the editing product's images locally
+      if (editingProduct) {
+        setEditingProduct({
+          ...editingProduct,
+          images: editingProduct.images.filter(img => img.id !== imageId)
+        })
+      }
+      
+      // Refresh the products list
+      fetchProducts()
+      alert('Image deleted successfully!')
+    } catch (e: any) {
+      alert(e.response?.data?.message || 'Failed to delete image')
+    } finally {
+      setDeletingImageId(null)
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -202,7 +233,7 @@ export default function ProductsAdmin() {
               {/* Product Image */}
               <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200">
                 <img
-                  src={p.images && p.images.length > 0 && p.images[0] ? toImageUrl(p.images[0]) : getPlaceholderImage(400, 400, p.name)}
+                  src={p.images && p.images.length > 0 && p.images[0]?.path ? toImageUrl(p.images[0].path) : getPlaceholderImage(400, 400, p.name)}
                   alt={p.name}
                   className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"
                   onError={(e) => {
@@ -416,26 +447,67 @@ export default function ProductsAdmin() {
 
           {editingProduct && editingProduct.images && editingProduct.images.length > 0 && (
             <div>
-              <label className="mb-2 block text-sm font-medium text-gray-700">Current Images</label>
-              <div className="custom-scrollbar flex gap-3 overflow-x-auto rounded-lg bg-gray-50 p-3">
+              <label className="mb-2 block text-sm font-medium text-gray-700">
+                Current Images ({editingProduct.images.length})
+              </label>
+              <div className="custom-scrollbar flex gap-3 overflow-x-auto rounded-lg bg-gray-50 p-4">
                 {editingProduct.images.map((img, idx) => (
-                  <div key={idx} className="relative flex-shrink-0 overflow-hidden rounded-lg shadow-sm">
+                  <div key={img.id} className="group relative flex-shrink-0 overflow-hidden rounded-lg border-2 border-gray-200 shadow-sm transition-all hover:border-blue-400 hover:shadow-md">
                     <img
-                      src={toImageUrl(img)}
+                      src={toImageUrl(img.path)}
                       alt={`Product image ${idx + 1}`}
-                      className="h-24 w-24 rounded-lg border-2 border-gray-200 object-cover"
+                      className="h-32 w-32 rounded-lg object-cover transition-transform duration-300 group-hover:scale-110"
                       onError={(e) => {
                         const target = e.currentTarget
-                        target.src = getPlaceholderImage(100, 100, `${idx + 1}`)
+                        target.src = getPlaceholderImage(150, 150, `${idx + 1}`)
                         target.onerror = null
                       }}
                     />
+                    
+                    {/* Image Number Badge */}
+                    <div className="absolute left-2 top-2 rounded-full bg-blue-600 px-2 py-0.5 text-xs font-bold text-white shadow-md">
+                      #{idx + 1}
+                    </div>
+
+                    {/* Delete Button */}
+                    <button
+                      onClick={() => deleteImage(img.id)}
+                      disabled={deletingImageId === img.id}
+                      className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-red-600 text-white shadow-lg transition-all hover:bg-red-700 hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed"
+                      title="Delete this image"
+                    >
+                      {deletingImageId === img.id ? (
+                        <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                      ) : (
+                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      )}
+                    </button>
+
+                    {/* Image ID for reference */}
+                    <div className="absolute bottom-2 left-2 rounded bg-black/60 px-1.5 py-0.5 text-[10px] font-mono text-white">
+                      ID: {img.id}
+                    </div>
                   </div>
                 ))}
               </div>
-              <p className="mt-2 text-xs text-gray-500">
-                ℹ️ Uploading new images will add to the existing ones
-              </p>
+              <div className="mt-3 flex items-start gap-2 rounded-lg bg-blue-50 p-3">
+                <svg className="mt-0.5 h-5 w-5 flex-shrink-0 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                </svg>
+                <div className="text-xs text-blue-800">
+                  <p className="font-semibold">Image Management:</p>
+                  <ul className="mt-1 list-inside list-disc space-y-0.5">
+                    <li>Click the red trash icon to delete an image</li>
+                    <li>Upload new images below to add more (won't replace existing)</li>
+                    <li>At least one image is recommended for display</li>
+                  </ul>
+                </div>
+              </div>
             </div>
           )}
 

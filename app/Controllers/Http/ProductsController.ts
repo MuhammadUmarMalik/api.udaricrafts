@@ -58,7 +58,11 @@ export default class ProductsController {
           discount: product.discount,
           price: product.price,
           quantity: product.quantity,
-          images: product.images ? product.images.map((image) => image.path) : [],
+          images: product.images ? product.images.map((image) => ({
+            id: image.id,
+            path: image.path,
+            productId: image.productId
+          })) : [],
           created_at: product.createdAt,
           updated_at: product.updatedAt,
         };
@@ -88,7 +92,11 @@ export default class ProductsController {
             discount: product.discount,
             price: product.price,
             quantity: product.quantity,
-            images: product.images ? product.images.map((image) => image.path) : [],
+            images: product.images ? product.images.map((image) => ({
+              id: image.id,
+              path: image.path,
+              productId: image.productId
+            })) : [],
             created_at: product.createdAt,
             updated_at: product.updatedAt,
           };
@@ -149,7 +157,11 @@ export default class ProductsController {
                 discount: product.discount,
                 price: product.price,
                 quantity: product.quantity,
-                images: product.images ? product.images.map((image) => image.path) : [],
+                images: product.images ? product.images.map((image) => ({
+                  id: image.id,
+                  path: image.path,
+                  productId: image.productId
+                })) : [],
             }
             
             return response.send(Response('Product Updated Successfully', updatedData))
@@ -206,7 +218,11 @@ export default class ProductsController {
             discount: product.discount,
             price: product.price,
             quantity: product.quantity,
-            images: product.images ? product.images.map((image) => image.path) : [],
+            images: product.images ? product.images.map((image) => ({
+              id: image.id,
+              path: image.path,
+              productId: image.productId
+            })) : [],
             created_at: product.createdAt,
             updated_at: product.updatedAt,
           }
@@ -223,13 +239,27 @@ export default class ProductsController {
     public async deleteImage({ params, response }: HttpContextContract) {
         try {
             const productImage = await ProductImage.findOrFail(params.id)
-            const image = Application.tmpPath(`uploads/${productImage.path}`)
-            await fs.unlink(image)
+            
+            // Path is already stored as 'uploads/filename', so just use tmpPath directly
+            const imagePath = Application.tmpPath(productImage.path as string)
+            
+            // Try to delete the file from filesystem (don't fail if file doesn't exist)
+            try {
+                await fs.unlink(imagePath)
+            } catch (fileError) {
+                console.log('File not found or already deleted:', imagePath)
+            }
+            
+            // Always delete the database record
             await productImage.delete()
-            return response.send(Response('Product Image Deleted Successfully', productImage))
+            
+            return response.send(Response('Product Image Deleted Successfully', {
+                id: productImage.id,
+                path: productImage.path
+            }))
         } catch (error) {
-            console.log(error)
-            return response.status(400).send(error)
+            console.log('Error deleting image:', error)
+            return response.status(404).send(Response('Product image not found', error))
         }
     }
 }

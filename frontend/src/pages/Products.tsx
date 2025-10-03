@@ -6,11 +6,17 @@ import { toImageUrl, getPlaceholderImage } from '../utils/image'
 import Card from '../components/ui/Card'
 import Spinner from '../components/ui/Spinner'
 
+type ProductImage = {
+  id: number
+  path: string
+  productId: number
+}
+
 type Product = {
   id: number
   name: string
   price: number
-  images?: string[]
+  images?: ProductImage[] | string[]  // Support both formats for compatibility
   discount?: number
   category?: number
 }
@@ -148,8 +154,12 @@ export default function Products() {
       ) : (
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
           {products.map((p) => {
-            const imageUrl = p.images && p.images.length > 0 && p.images[0] 
-              ? toImageUrl(p.images[0]) 
+            // Handle both old format (string[]) and new format (object[])
+            const firstImage = p.images && p.images.length > 0 
+              ? (typeof p.images[0] === 'string' ? p.images[0] : p.images[0].path)
+              : null
+            const imageUrl = firstImage 
+              ? toImageUrl(firstImage) 
               : getPlaceholderImage(400, 400, p.name)
             const productReviews = getProductReviews(p.id)
             const avgRating = getAverageRating(p.id)

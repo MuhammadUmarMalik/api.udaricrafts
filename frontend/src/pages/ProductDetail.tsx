@@ -9,6 +9,12 @@ import Spinner from '../components/ui/Spinner'
 import Badge from '../components/ui/Badge'
 import Card from '../components/ui/Card'
 
+type ProductImage = {
+  id: number
+  path: string
+  productId: number
+}
+
 type Product = {
   id: number
   name: string
@@ -17,7 +23,7 @@ type Product = {
   price: number
   discount?: number
   quantity?: number
-  images?: string[]
+  images?: ProductImage[] | string[]  // Support both formats for compatibility
 }
 
 type Review = {
@@ -90,12 +96,16 @@ export default function ProductDetail() {
 
   const handleAddToCart = () => {
     if (!product) return
+    // Handle both old format (string[]) and new format (object[])
+    const firstImage = product.images && product.images.length > 0
+      ? (typeof product.images[0] === 'string' ? product.images[0] : product.images[0].path)
+      : ''
     addItem(
       {
         productId: product.id,
         name: product.name,
         price: product.price,
-        image: product.images?.[0] || '',
+        image: firstImage,
       },
       quantity
     )
@@ -196,6 +206,11 @@ export default function ProductDetail() {
   }
 
   const images = product.images && product.images.length > 0 ? product.images : []
+  
+  // Helper function to get image path (handle both old and new format)
+  const getImagePath = (img: ProductImage | string): string => {
+    return typeof img === 'string' ? img : img.path
+  }
 
   return (
     <div className="mx-auto max-w-6xl space-y-8">
@@ -204,7 +219,7 @@ export default function ProductDetail() {
         <div className="space-y-4">
           <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-gray-100 to-gray-200 shadow-lg">
             <img
-              src={images.length > 0 ? toImageUrl(images[selectedImage]) : getPlaceholderImage(600, 400, product.name)}
+              src={images.length > 0 ? toImageUrl(getImagePath(images[selectedImage])) : getPlaceholderImage(600, 400, product.name)}
               alt={product.name}
               className="h-[500px] w-full object-contain transition-transform duration-300"
               onError={(e) => {
@@ -237,7 +252,7 @@ export default function ProductDetail() {
                   }`}
                 >
                   <img
-                    src={toImageUrl(img)}
+                    src={toImageUrl(getImagePath(img))}
                     alt={`${product.name} - Image ${idx + 1}`}
                     className="h-24 w-24 object-cover transition-transform duration-200 group-hover:scale-110"
                     onError={(e) => {

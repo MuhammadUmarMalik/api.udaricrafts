@@ -6,20 +6,18 @@ export default class ProductImage extends BaseModel {
   @column({ isPrimary: true })
   public id: number
 
-  @column()
-  productId: number
+  @column({ serializeAs: 'productId' })
+  public productId: number
 
   @column()
-  path: String
+  public path: string
 
-  @column.dateTime({ autoCreate: true })
+  @column.dateTime({ autoCreate: true, serializeAs: 'createdAt' })
   public createdAt: DateTime
 
-  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  @column.dateTime({ autoCreate: true, autoUpdate: true, serializeAs: 'updatedAt' })
   public updatedAt: DateTime
 
-  // @hasMany(() => Product)
-  // public product: HasMany<typeof Product>
   @belongsTo(() => Product)
   public product: BelongsTo<typeof Product>
 }
