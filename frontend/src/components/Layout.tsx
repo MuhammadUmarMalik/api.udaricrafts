@@ -46,6 +46,17 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 <span className="hidden sm:inline">Products</span>
               </Link>
               <Link
+                to="/complaint"
+                className={`flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+                  isActive('/complaint') ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                }`}
+              >
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <span className="hidden sm:inline">Complaint</span>
+              </Link>
+              <Link
                 to="/cart"
                 className={`relative flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
                   isActive('/cart') ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
@@ -161,6 +172,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   <a href="tel:+923001234567" className="hover:text-blue-600">
                     +92 300 1234567
                   </a>
+                </li>
+                <li>
+                  <Link to="/complaint" className="hover:text-blue-600">
+                    Submit a Complaint
+                  </Link>
                 </li>
                 <li className="pt-2">
                   <div className="flex gap-3">

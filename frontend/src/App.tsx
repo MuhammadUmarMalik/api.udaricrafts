@@ -9,6 +9,7 @@ import PaymentSuccess from './pages/PaymentSuccess'
 import PaymentCancel from './pages/PaymentCancel'
 import Login from './pages/Login'
 import Register from './pages/Register'
+import Complaint from './pages/Complaint'
 import AdminLayout from './pages/admin/AdminLayout'
 import Dashboard from './pages/admin/Dashboard'
 import ProductsAdmin from './pages/admin/ProductsAdmin'
@@ -36,6 +37,7 @@ export default function App() {
       <Route element={<Layout><PaymentCancel /></Layout>} path="/payment/cancel" />
       <Route element={<Layout><Login /></Layout>} path="/login" />
       <Route element={<Layout><Register /></Layout>} path="/register" />
+      <Route element={<Layout><Complaint /></Layout>} path="/complaint" />
 
       {/* Admin Routes - Separate Layout */}
       <Route

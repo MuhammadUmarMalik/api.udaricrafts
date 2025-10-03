@@ -7,8 +7,12 @@ import Mail from '@ioc:Adonis/Addons/Mail';
 export default class ComplaintsController {
     public async store({ request, response }: HttpContextContract) {
         try {
-            const complaint = await request.validate(ComplaintValidator)
-            await Complaint.create(complaint)
+            const complaintData = await request.validate(ComplaintValidator)
+            // Set default status to 'pending' if not provided
+            const complaint = await Complaint.create({
+                ...complaintData,
+                status: 'pending'
+            })
             return response.send(Response('Complaint Submitted Successfully', complaint))
         } catch (error) {
             console.log(error);
