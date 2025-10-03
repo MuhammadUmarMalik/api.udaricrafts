@@ -27,6 +27,7 @@ import UsersAdmin from './pages/admin/UsersAdmin'
 import NotificationsAdmin from './pages/admin/NotificationsAdmin'
 import ComplaintsAdmin from './pages/admin/ComplaintsAdmin'
 import ProtectedRoute from './components/ProtectedRoute'
+import AdminRoute from './components/AdminRoute'
 import Layout from './components/Layout'
 
 export default function App() {
@@ -83,9 +84,9 @@ export default function App() {
       <Route
         path="/admin"
         element={
-          <ProtectedRoute>
+          <AdminRoute>
             <AdminLayout />
-          </ProtectedRoute>
+          </AdminRoute>
         }
       >
         <Route index element={<Dashboard />} />

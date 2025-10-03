@@ -19,6 +19,21 @@ export const endpoints = {
   createJazzCashCheckout: (orderId: number | string) => `/create-jazzcash-checkout/${orderId}`,
   verifyPayment: '/verify-payment',
 
+  // customer (authenticated user endpoints)
+  customer: {
+    // User profile
+    profile: '/api/users/profile',
+    updateProfile: '/api/users/profile',
+    changePassword: '/api/users/password',
+    
+    // User orders
+    orders: '/api/orders',
+    
+    // User reviews
+    reviews: '/api/reviews/user',
+    review: (id: number | string) => `/api/reviews/user/${id}`,
+  },
+
   // admin (all prefixed with /api)
   admin: {
     // User profile
