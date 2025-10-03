@@ -264,25 +264,230 @@ export default class OrderController {
             console.log('✅ Order created successfully:', orderNumber)
             console.log('📧 Sending confirmation email...')
 
+            // Load order items for email
+            await newOrder.load('orderItems')
+
+            // Build order items HTML
+            const orderItemsHtml = products.map((product) => {
+                const foundProduct = productList.find(p => p.id === product.productId)
+                if (!foundProduct) return ''
+                
+                const discountedPrice = foundProduct.price - (foundProduct.price * foundProduct.discount / 100)
+                const itemTotal = discountedPrice * product.buyingQuantity
+                
+                return `
+                    <tr>
+                        <td style="padding: 15px; border-bottom: 1px solid #eeeeee;">
+                            <div style="font-weight: 600; color: #333333; margin-bottom: 4px;">${foundProduct.name}</div>
+                            <div style="font-size: 13px; color: #666666;">Qty: ${product.buyingQuantity}</div>
+                        </td>
+                        <td style="padding: 15px; border-bottom: 1px solid #eeeeee; text-align: right;">
+                            <div style="font-weight: 600; color: #333333;">Rs ${discountedPrice.toLocaleString()}</div>
+                            ${foundProduct.discount > 0 ? `<div style="font-size: 12px; color: #10b981;">-${foundProduct.discount}% off</div>` : ''}
+                        </td>
+                        <td style="padding: 15px; border-bottom: 1px solid #eeeeee; text-align: right; font-weight: 600; color: #333333;">
+                            Rs ${itemTotal.toLocaleString()}
+                        </td>
+                    </tr>
+                `
+            }).join('')
+
             // Send confirmation email (outside transaction)
             try {
                 await Mail.send((message) => {
                     message
                         .to(email)
-                        .from('no-reply@yourstore.com')
-                        .subject('Order Confirmation - Udari Crafts')
+                        .from('no-reply@udaricrafts.com', 'Udari Crafts')
+                        .subject(`Order Confirmation #${orderNumber.slice(0, 8)} - Udari Crafts`)
                         .html(`
-                <h1>Order Confirmation</h1>
-                <p>Dear ${name},</p>
-                <p>Thank you for your order! Your order has been confirmed.</p>
-                <p><strong>Order Number:</strong> ${orderNumber}</p>
-                <p><strong>Total Amount:</strong> Rs ${totalPrice.toLocaleString()}</p>
-                <p><strong>Status:</strong> ${newOrder.status}</p>
-                <p>We will notify you once your order is processed and shipped.</p>
-                <p>Thank you for shopping with us!</p>
-                <br>
-                <h3>Best Regards,<br>Udari Crafts Team</h3>
-              `)
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Confirmation</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f5f5f5;">
+    <table role="presentation" style="width: 100%; border-collapse: collapse;">
+        <tr>
+            <td align="center" style="padding: 40px 0;">
+                <table role="presentation" style="width: 600px; max-width: 100%; border-collapse: collapse; background-color: #ffffff; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                    
+                    <!-- Header -->
+                    <tr>
+                        <td style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 30px; text-align: center;">
+                            <h1 style="margin: 0; color: #ffffff; font-size: 32px; font-weight: 700;">Udari Crafts</h1>
+                            <p style="margin: 10px 0 0 0; color: #ffffff; font-size: 16px; opacity: 0.95;">Handcrafted with Love</p>
+                        </td>
+                    </tr>
+
+                    <!-- Success Message -->
+                    <tr>
+                        <td style="padding: 40px 30px 30px; text-align: center;">
+                            <div style="width: 80px; height: 80px; margin: 0 auto 20px; background-color: #10b981; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;">
+                                <svg width="50" height="50" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                </svg>
+                            </div>
+                            <h2 style="margin: 0 0 10px 0; color: #1f2937; font-size: 28px; font-weight: 700;">Order Confirmed!</h2>
+                            <p style="margin: 0; color: #6b7280; font-size: 16px;">Thank you for your order, ${name}</p>
+                        </td>
+                    </tr>
+
+                    <!-- Order Details -->
+                    <tr>
+                        <td style="padding: 0 30px 30px;">
+                            <table role="presentation" style="width: 100%; border-collapse: collapse; background-color: #f9fafb; border-radius: 8px; overflow: hidden;">
+                                <tr>
+                                    <td style="padding: 20px;">
+                                        <table role="presentation" style="width: 100%; border-collapse: collapse;">
+                                            <tr>
+                                                <td style="padding: 8px 0;">
+                                                    <span style="color: #6b7280; font-size: 14px;">Order Number</span><br>
+                                                    <span style="color: #1f2937; font-size: 16px; font-weight: 600;">#${orderNumber.slice(0, 13)}...</span>
+                                                </td>
+                                                <td style="padding: 8px 0; text-align: right;">
+                                                    <span style="color: #6b7280; font-size: 14px;">Order Date</span><br>
+                                                    <span style="color: #1f2937; font-size: 16px; font-weight: 600;">${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding: 8px 0;">
+                                                    <span style="color: #6b7280; font-size: 14px;">Status</span><br>
+                                                    <span style="display: inline-block; margin-top: 4px; padding: 4px 12px; background-color: #fef3c7; color: #92400e; border-radius: 12px; font-size: 13px; font-weight: 600;">Pending</span>
+                                                </td>
+                                                <td style="padding: 8px 0; text-align: right;">
+                                                    <span style="color: #6b7280; font-size: 14px;">Total Amount</span><br>
+                                                    <span style="color: #10b981; font-size: 24px; font-weight: 700;">Rs ${totalPrice.toLocaleString()}</span>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
+                    <!-- Order Items -->
+                    <tr>
+                        <td style="padding: 0 30px 30px;">
+                            <h3 style="margin: 0 0 20px 0; color: #1f2937; font-size: 20px; font-weight: 600;">Order Items</h3>
+                            <table role="presentation" style="width: 100%; border-collapse: collapse; background-color: #ffffff; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden;">
+                                <thead>
+                                    <tr style="background-color: #f9fafb;">
+                                        <th style="padding: 15px; text-align: left; font-size: 13px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px;">Product</th>
+                                        <th style="padding: 15px; text-align: right; font-size: 13px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px;">Price</th>
+                                        <th style="padding: 15px; text-align: right; font-size: 13px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px;">Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${orderItemsHtml}
+                                    <tr style="background-color: #f9fafb;">
+                                        <td colspan="2" style="padding: 20px; text-align: right; font-weight: 600; color: #1f2937; font-size: 16px;">
+                                            Subtotal:
+                                        </td>
+                                        <td style="padding: 20px; text-align: right; font-weight: 600; color: #1f2937; font-size: 16px;">
+                                            Rs ${totalPrice.toLocaleString()}
+                                        </td>
+                                    </tr>
+                                    <tr style="background-color: #f9fafb;">
+                                        <td colspan="2" style="padding: 0 20px 20px 20px; text-align: right; color: #6b7280; font-size: 14px;">
+                                            Shipping:
+                                        </td>
+                                        <td style="padding: 0 20px 20px 20px; text-align: right; color: #10b981; font-weight: 600; font-size: 14px;">
+                                            Free
+                                        </td>
+                                    </tr>
+                                    <tr style="background-color: #667eea;">
+                                        <td colspan="2" style="padding: 20px; text-align: right; font-weight: 700; color: #ffffff; font-size: 18px;">
+                                            Total:
+                                        </td>
+                                        <td style="padding: 20px; text-align: right; font-weight: 700; color: #ffffff; font-size: 18px;">
+                                            Rs ${totalPrice.toLocaleString()}
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </td>
+                    </tr>
+
+                    <!-- Shipping Information -->
+                    <tr>
+                        <td style="padding: 0 30px 30px;">
+                            <h3 style="margin: 0 0 15px 0; color: #1f2937; font-size: 20px; font-weight: 600;">Shipping Information</h3>
+                            <div style="background-color: #f9fafb; padding: 20px; border-radius: 8px; border-left: 4px solid #667eea;">
+                                <p style="margin: 0 0 8px 0; color: #1f2937; font-weight: 600;">${name}</p>
+                                <p style="margin: 0 0 8px 0; color: #6b7280; font-size: 14px;">${email}</p>
+                                <p style="margin: 0 0 8px 0; color: #6b7280; font-size: 14px;">${phone}</p>
+                                <p style="margin: 0; color: #6b7280; font-size: 14px; line-height: 1.6;">${address}</p>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <!-- What's Next -->
+                    <tr>
+                        <td style="padding: 0 30px 30px;">
+                            <h3 style="margin: 0 0 15px 0; color: #1f2937; font-size: 20px; font-weight: 600;">What's Next?</h3>
+                            <div style="background-color: #eff6ff; padding: 20px; border-radius: 8px; border-left: 4px solid #3b82f6;">
+                                <p style="margin: 0 0 10px 0; color: #1e40af; font-size: 14px; line-height: 1.6;">
+                                    🔸 We're processing your order<br>
+                                    🔸 You'll receive a shipping notification soon<br>
+                                    🔸 Track your order status anytime<br>
+                                    🔸 Estimated delivery: 3-5 business days
+                                </p>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <!-- Support -->
+                    <tr>
+                        <td style="padding: 0 30px 40px; text-align: center;">
+                            <p style="margin: 0 0 15px 0; color: #6b7280; font-size: 14px;">
+                                Need help? Contact us anytime
+                            </p>
+                            <table role="presentation" style="margin: 0 auto; border-collapse: collapse;">
+                                <tr>
+                                    <td style="padding: 0 10px;">
+                                        <a href="mailto:support@udaricrafts.com" style="color: #667eea; text-decoration: none; font-size: 14px; font-weight: 600;">
+                                            📧 Email Support
+                                        </a>
+                                    </td>
+                                    <td style="padding: 0 10px; border-left: 1px solid #e5e7eb;">
+                                        <a href="tel:+923001234567" style="color: #667eea; text-decoration: none; font-size: 14px; font-weight: 600;">
+                                            📞 Call Us
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
+                    <!-- Footer -->
+                    <tr>
+                        <td style="background-color: #1f2937; padding: 30px; text-align: center;">
+                            <p style="margin: 0 0 10px 0; color: #9ca3af; font-size: 14px;">
+                                Thank you for shopping with Udari Crafts!
+                            </p>
+                            <p style="margin: 0 0 15px 0; color: #6b7280; font-size: 12px;">
+                                © ${new Date().getFullYear()} Udari Crafts. All rights reserved.
+                            </p>
+                            <div style="margin-top: 15px;">
+                                <a href="#" style="display: inline-block; margin: 0 8px; color: #9ca3af; text-decoration: none; font-size: 12px;">Privacy Policy</a>
+                                <span style="color: #4b5563;">•</span>
+                                <a href="#" style="display: inline-block; margin: 0 8px; color: #9ca3af; text-decoration: none; font-size: 12px;">Terms of Service</a>
+                                <span style="color: #4b5563;">•</span>
+                                <a href="#" style="display: inline-block; margin: 0 8px; color: #9ca3af; text-decoration: none; font-size: 12px;">Contact Us</a>
+                            </div>
+                        </td>
+                    </tr>
+
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
+                        `)
                 })
             } catch (emailError) {
                 console.error('⚠️ Email sending failed:', emailError)
