@@ -53,10 +53,10 @@ export default function AdminChangePassword() {
         confirmPassword: '',
       })
 
-      // Redirect after 2 seconds
+      // Redirect after 1 second
       setTimeout(() => {
         navigate('/admin/profile')
-      }, 2000)
+      }, 1000)
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to change password')
     } finally {

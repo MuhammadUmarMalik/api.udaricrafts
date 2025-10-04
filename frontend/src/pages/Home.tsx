@@ -33,7 +33,7 @@ export default function Home() {
       return
     }
     // Navigate to order status page
-    navigate(`/order-status/${orderNumber.trim()}`)
+    navigate(`/order/${orderNumber.trim()}`)
   }
 
   const handleKeyPress = (e: React.KeyboardEvent) => {

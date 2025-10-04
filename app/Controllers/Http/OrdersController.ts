@@ -539,7 +539,7 @@ export default class OrderController {
                     message
                         .to(email)
                         .from('no-reply@udaricrafts.com', 'Udari Crafts')
-                        .subject(`🎉 Order Confirmed #${orderNumber.slice(0, 8)} - Udari Crafts`)
+                        .subject(`🎉 Order Confirmed - Udari Crafts`)
                         .html(`
 <!DOCTYPE html>
 <html lang="en">
@@ -558,7 +558,7 @@ export default class OrderController {
     
     <!-- Preheader Text (Hidden) -->
     <div style="display: none; max-height: 0; overflow: hidden; opacity: 0;">
-        Your order has been confirmed! Order #${orderNumber.slice(0, 8)} - Total: Rs ${totalPrice.toLocaleString()}
+        Your order has been confirmed! Order Number: ${orderNumber} - Total: Rs ${totalPrice.toLocaleString()}. Save this number to track your order.
     </div>
     
     <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="width: 100%; border-collapse: collapse; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);">
@@ -592,10 +592,17 @@ export default class OrderController {
                                 </tr>
                             </table>
                             <h2 style="margin: 24px 0 12px 0; color: #111827; font-size: 32px; font-weight: 800; letter-spacing: -0.5px;">Order Confirmed! 🎉</h2>
-                            <p style="margin: 0; color: #6b7280; font-size: 17px; line-height: 1.6;">
+                            <p style="margin: 0 0 16px 0; color: #6b7280; font-size: 17px; line-height: 1.6;">
                                 Hi <strong style="color: #667eea;">${name}</strong>,<br>
                                 Thank you for your order! We're excited to start preparing your handcrafted items.
                             </p>
+                            
+                            <!-- Prominent Order Number for Tracking -->
+                            <div style="display: inline-block; padding: 16px 24px; background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); border-radius: 12px; border: 2px solid #3b82f6; margin-top: 8px;">
+                                <p style="margin: 0 0 4px 0; color: #1e40af; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">Your Order Number</p>
+                                <p style="margin: 0; color: #1e3a8a; font-size: 18px; font-weight: 800; font-family: 'Courier New', monospace; letter-spacing: 0.5px; word-break: break-all;">${orderNumber}</p>
+                                <p style="margin: 6px 0 0 0; color: #3b82f6; font-size: 11px; font-weight: 600;">📋 Save this number to track your order</p>
+                            </div>
                         </td>
                     </tr>
 
@@ -609,7 +616,7 @@ export default class OrderController {
                                             <tr>
                                                 <td style="padding: 10px 0; vertical-align: top;">
                                                     <div style="color: #9ca3af; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Order Number</div>
-                                                    <div style="color: #1f2937; font-size: 17px; font-weight: 700; font-family: 'Courier New', monospace;">#${orderNumber.slice(0, 16)}...</div>
+                                                    <div style="color: #1f2937; font-size: 14px; font-weight: 700; font-family: 'Courier New', monospace; word-break: break-all;">${orderNumber}</div>
                                                 </td>
                                                 <td style="padding: 10px 0; text-align: right; vertical-align: top;">
                                                     <div style="color: #9ca3af; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Order Date</div>
@@ -1206,10 +1213,15 @@ export default class OrderController {
     public async getUserOrders({ auth, response }: HttpContextContract) {
         try {
             const user = auth.user
+            console.log('🔍 getUserOrders - User:', user ? user.email : 'No user')
+            
             if (!user) {
+                console.log('❌ No authenticated user found')
                 return response.status(401).json({ message: 'User not authenticated' })
             }
 
+            console.log(`📦 Fetching orders for user: ${user.email}`)
+            
             const orders = await Order.query()
                 .where('email', user.email)
                 .preload('orderItems', (orderItemsQuery) => {
@@ -1217,6 +1229,9 @@ export default class OrderController {
                 })
                 .preload('paymentDetails')
                 .orderBy('created_at', 'desc')
+
+            console.log(`✅ Found ${orders.length} orders for ${user.email}`)
+            console.log('📋 Orders:', orders.map(o => ({ id: o.id, orderNumber: o.order_number, total: o.total })))
 
             return response.send(Response('User orders fetched successfully', orders))
         } catch (error) {

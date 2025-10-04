@@ -110,7 +110,7 @@ export default function ProductDetail() {
       quantity
     )
     setAddedToCart(true)
-    setTimeout(() => setAddedToCart(false), 2000)
+    setTimeout(() => setAddedToCart(false), 1500)
   }
 
   const validateReview = () => {
@@ -148,7 +148,7 @@ export default function ProductDetail() {
       // Refresh reviews to show the newly submitted review
       fetchReviews()
       
-      setTimeout(() => setReviewSuccess(false), 5000)
+      setTimeout(() => setReviewSuccess(false), 3000)
     } catch (error: any) {
       console.error('Review submission error:', error)
       setReviewErrors({

@@ -11,30 +11,58 @@ export default function OrderStatus() {
   const { number } = useParams<{ number: string }>()
   const [order, setOrder] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!number) return
+    if (!number) {
+      setLoading(false)
+      return
+    }
     
     const fetchOrder = async () => {
       try {
+        console.log('🔍 Fetching order:', number)
         const response = await api.get(endpoints.orderByNumber(number))
-        setOrder((response.data as any).order)
-      } catch (error) {
-        console.error('Failed to fetch order:', error)
-        // Retry once after 1 second if initial fetch fails
+        console.log('✅ Order fetched:', response.data)
+        
+        // Handle different response structures
+        const orderData = (response.data as any).order || (response.data as any).data?.order
+        
+        if (orderData) {
+          setOrder(orderData)
+          setError(null)
+        } else {
+          console.warn('⚠️ No order data in response')
+          setError('Invalid response format')
+        }
+        setLoading(false)
+      } catch (err: any) {
+        console.error('❌ Failed to fetch order:', err)
+        const errorMsg = err.response?.data?.message || err.message || 'Failed to load order'
+        
+        // Retry once after 500ms if initial fetch fails
         setTimeout(async () => {
           try {
+            console.log('🔄 Retrying order fetch:', number)
             const response = await api.get(endpoints.orderByNumber(number))
-            setOrder((response.data as any).order)
-          } catch (retryError) {
-            console.error('Retry failed:', retryError)
-          } finally {
+            console.log('✅ Retry successful:', response.data)
+            
+            const orderData = (response.data as any).order || (response.data as any).data?.order
+            
+            if (orderData) {
+              setOrder(orderData)
+              setError(null)
+            } else {
+              setError('Order not found')
+            }
+            setLoading(false)
+          } catch (retryError: any) {
+            console.error('❌ Retry failed:', retryError)
+            setError(retryError.response?.data?.message || errorMsg)
             setLoading(false)
           }
-        }, 1000)
-        return
+        }, 500)
       }
-      setLoading(false)
     }
     
     fetchOrder()
@@ -65,10 +93,27 @@ export default function OrderStatus() {
               </svg>
             </div>
             <h2 className="mb-2 text-2xl font-bold text-gray-900">Order not found</h2>
-            <p className="mb-6 text-gray-600">Please check your order number</p>
-            <Link to="/products">
-              <Button>Continue Shopping</Button>
-            </Link>
+            <p className="mb-6 text-gray-600">
+              {error || 'Please check your order number'}
+            </p>
+            {number && (
+              <p className="mb-4 text-sm text-gray-500 font-mono bg-gray-100 py-2 px-4 rounded">
+                Order: {number}
+              </p>
+            )}
+            <div className="flex gap-3 justify-center">
+              <Link to="/products">
+                <Button>Continue Shopping</Button>
+              </Link>
+              {number && (
+                <Button 
+                  variant="outline" 
+                  onClick={() => window.location.reload()}
+                >
+                  Try Again
+                </Button>
+              )}
+            </div>
           </Card>
         </div>
       </div>

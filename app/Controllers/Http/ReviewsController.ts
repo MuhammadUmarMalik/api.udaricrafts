@@ -55,16 +55,26 @@ export default class ReviewsController {
     public async getUserReviews({ auth, response }: HttpContextContract) {
         try {
             const user = auth.user
+            console.log('🔍 getUserReviews - User:', user ? user.email : 'No user')
+            
             if (!user) {
+                console.log('❌ No authenticated user found')
                 return response.status(401).json({ message: 'User not authenticated' })
             }
 
+            console.log(`⭐ Fetching reviews for user: ${user.email}`)
+            
             const reviews = await Review.query()
                 .where('email', user.email)
+                .preload('product')
                 .orderBy('created_at', 'desc')
+
+            console.log(`✅ Found ${reviews.length} reviews for ${user.email}`)
+            console.log('📋 Reviews:', reviews.map(r => ({ id: r.id, productId: r.productId, rating: r.rating })))
 
             return response.send(Response('User reviews fetched successfully', reviews))
         } catch (error) {
+            console.error('❌ Error fetching user reviews:', error)
             return response.status(500).json({ 
                 message: 'Failed to fetch user reviews', 
                 error: error.message 

@@ -23,6 +23,7 @@ export default function ComplaintsAdmin() {
   const [selectedComplaint, setSelectedComplaint] = useState<Complaint | null>(null)
   const [emailResponse, setEmailResponse] = useState('')
   const [sendingEmail, setSendingEmail] = useState(false)
+  const [updatingStatus, setUpdatingStatus] = useState(false)
 
   const fetchComplaints = async () => {
     setLoading(true)
@@ -45,11 +46,26 @@ export default function ComplaintsAdmin() {
 
   const updateStatus = async (id: number, status: string) => {
     try {
+      setUpdatingStatus(true)
       await api.put(endpoints.admin.complaint(id), { status })
-      fetchComplaints()
+      
+      // Update local state immediately for better UX
+      if (selectedComplaint && selectedComplaint.id === id) {
+        setSelectedComplaint({ ...selectedComplaint, status })
+      }
+      
+      // Update the complaints list
+      setComplaints(complaints.map(c => 
+        c.id === id ? { ...c, status } : c
+      ))
+      
     } catch (error) {
       console.error('Failed to update status:', error)
       alert('Failed to update status')
+      // Refresh to get correct state
+      fetchComplaints()
+    } finally {
+      setUpdatingStatus(false)
     }
   }
 
@@ -195,29 +211,70 @@ export default function ComplaintsAdmin() {
 
                   {/* Status Update */}
                   <div>
-                    <p className="mb-2 text-sm text-gray-500">Update Status</p>
+                    <p className="mb-3 text-sm font-medium text-gray-900">Update Status</p>
                     <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        variant={selectedComplaint.status === 'pending' ? 'primary' : 'outline'}
+                      <button
                         onClick={() => updateStatus(selectedComplaint.id, 'pending')}
+                        disabled={updatingStatus}
+                        className={`
+                          flex-1 rounded-lg px-4 py-2.5 text-sm font-semibold transition-all duration-200
+                          focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50
+                          ${selectedComplaint.status === 'pending'
+                            ? 'bg-yellow-500 text-white shadow-md ring-2 ring-yellow-500 ring-offset-2 hover:bg-yellow-600'
+                            : 'border-2 border-yellow-300 bg-yellow-50 text-yellow-700 hover:border-yellow-400 hover:bg-yellow-100'
+                          }
+                        `}
                       >
-                        Pending
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant={selectedComplaint.status === 'resolved' ? 'primary' : 'outline'}
+                        {updatingStatus && selectedComplaint.status !== 'pending' ? (
+                          <Spinner size="sm" className="mx-auto" />
+                        ) : (
+                          <span className="flex items-center justify-center gap-1">
+                            {selectedComplaint.status === 'pending' && '✓'} Pending
+                          </span>
+                        )}
+                      </button>
+                      
+                      <button
                         onClick={() => updateStatus(selectedComplaint.id, 'resolved')}
+                        disabled={updatingStatus}
+                        className={`
+                          flex-1 rounded-lg px-4 py-2.5 text-sm font-semibold transition-all duration-200
+                          focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50
+                          ${selectedComplaint.status === 'resolved'
+                            ? 'bg-green-600 text-white shadow-md ring-2 ring-green-500 ring-offset-2 hover:bg-green-700'
+                            : 'border-2 border-green-300 bg-green-50 text-green-700 hover:border-green-400 hover:bg-green-100'
+                          }
+                        `}
                       >
-                        Resolved
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant={selectedComplaint.status === 'rejected' ? 'primary' : 'outline'}
+                        {updatingStatus && selectedComplaint.status !== 'resolved' ? (
+                          <Spinner size="sm" className="mx-auto" />
+                        ) : (
+                          <span className="flex items-center justify-center gap-1">
+                            {selectedComplaint.status === 'resolved' && '✓'} Resolved
+                          </span>
+                        )}
+                      </button>
+                      
+                      <button
                         onClick={() => updateStatus(selectedComplaint.id, 'rejected')}
+                        disabled={updatingStatus}
+                        className={`
+                          flex-1 rounded-lg px-4 py-2.5 text-sm font-semibold transition-all duration-200
+                          focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50
+                          ${selectedComplaint.status === 'rejected'
+                            ? 'bg-red-600 text-white shadow-md ring-2 ring-red-500 ring-offset-2 hover:bg-red-700'
+                            : 'border-2 border-red-300 bg-red-50 text-red-700 hover:border-red-400 hover:bg-red-100'
+                          }
+                        `}
                       >
-                        Rejected
-                      </Button>
+                        {updatingStatus && selectedComplaint.status !== 'rejected' ? (
+                          <Spinner size="sm" className="mx-auto" />
+                        ) : (
+                          <span className="flex items-center justify-center gap-1">
+                            {selectedComplaint.status === 'rejected' && '✓'} Rejected
+                          </span>
+                        )}
+                      </button>
                     </div>
                   </div>
 

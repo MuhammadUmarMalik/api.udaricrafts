@@ -13,7 +13,7 @@ export default function PaymentSuccess() {
   const [verified, setVerified] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [orderNumber, setOrderNumber] = useState<string | null>(null)
-  const [countdown, setCountdown] = useState(3)
+  const [countdown, setCountdown] = useState(2)
 
   useEffect(() => {
     const verifyPayment = async () => {
@@ -48,10 +48,10 @@ export default function PaymentSuccess() {
             })
           }, 1000)
           
-          // Redirect to order status page after 3 seconds
+          // Redirect to order status page after 2 seconds
           setTimeout(() => {
             navigate(`/order/${data.order.order_number}`, { replace: true })
-          }, 3000)
+          }, 2000)
         } else {
           setError(data.message || 'Payment verification failed')
         }

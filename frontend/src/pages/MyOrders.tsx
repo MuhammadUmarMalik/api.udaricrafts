@@ -19,11 +19,19 @@ export default function MyOrders() {
   const fetchOrders = async () => {
     try {
       setLoading(true)
+      console.log('🔍 Fetching orders from:', endpoints.customer.orders)
       const response = await api.get(endpoints.customer.orders)
+      console.log('📦 Orders API Response:', response.data)
+      
+      // Handle different response structures
       const ordersData = (response.data as any).data || []
-      setOrders(ordersData)
-    } catch (err) {
-      console.error('Failed to fetch orders:', err)
+      console.log('📋 Parsed orders data:', ordersData)
+      
+      setOrders(Array.isArray(ordersData) ? ordersData : [])
+    } catch (err: any) {
+      console.error('❌ Failed to fetch orders:', err)
+      console.error('Error response:', err.response?.data)
+      console.error('Error status:', err.response?.status)
     } finally {
       setLoading(false)
     }

@@ -20,11 +20,19 @@ export default function MyReviews() {
   const fetchReviews = async () => {
     try {
       setLoading(true)
+      console.log('🔍 Fetching reviews from:', endpoints.customer.reviews)
       const response = await api.get(endpoints.customer.reviews)
+      console.log('⭐ Reviews API Response:', response.data)
+      
+      // Handle different response structures
       const reviewsData = (response.data as any).data || []
-      setReviews(reviewsData)
-    } catch (err) {
-      console.error('Failed to fetch reviews:', err)
+      console.log('📋 Parsed reviews data:', reviewsData)
+      
+      setReviews(Array.isArray(reviewsData) ? reviewsData : [])
+    } catch (err: any) {
+      console.error('❌ Failed to fetch reviews:', err)
+      console.error('Error response:', err.response?.data)
+      console.error('Error status:', err.response?.status)
     } finally {
       setLoading(false)
     }
@@ -32,7 +40,7 @@ export default function MyReviews() {
 
   const handleEdit = (review: any) => {
     setEditingId(review.id)
-    setEditForm({ rating: review.rating, comment: review.comment })
+    setEditForm({ rating: review.rating, comment: review.description || review.comment || '' })
   }
 
   const handleCancelEdit = () => {
@@ -195,7 +203,7 @@ export default function MyReviews() {
                     </div>
                   </div>
 
-                  <p className="text-gray-700">{review.comment}</p>
+                  <p className="text-gray-700">{review.description || review.comment}</p>
 
                   {review.status && (
                     <div className="mt-3">

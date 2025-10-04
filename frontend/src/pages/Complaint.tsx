@@ -64,7 +64,7 @@ export default function Complaint() {
       setForm({ name: '', email: '', phone: '', description: '' })
       
       // Reset success message after 5 seconds
-      setTimeout(() => setSuccess(false), 5000)
+      setTimeout(() => setSuccess(false), 3000)
     } catch (error: any) {
       console.error('Failed to submit complaint:', error)
       setErrors({
