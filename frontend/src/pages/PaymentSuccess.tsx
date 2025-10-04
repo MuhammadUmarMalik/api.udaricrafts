@@ -13,6 +13,7 @@ export default function PaymentSuccess() {
   const [verified, setVerified] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [orderNumber, setOrderNumber] = useState<string | null>(null)
+  const [countdown, setCountdown] = useState(3)
 
   useEffect(() => {
     const verifyPayment = async () => {
@@ -36,9 +37,20 @@ export default function PaymentSuccess() {
           setVerified(true)
           setOrderNumber(data.order.order_number)
           
+          // Start countdown
+          const countdownInterval = setInterval(() => {
+            setCountdown((prev) => {
+              if (prev <= 1) {
+                clearInterval(countdownInterval)
+                return 0
+              }
+              return prev - 1
+            })
+          }, 1000)
+          
           // Redirect to order status page after 3 seconds
           setTimeout(() => {
-            navigate(`/order/${data.order.order_number}`)
+            navigate(`/order/${data.order.order_number}`, { replace: true })
           }, 3000)
         } else {
           setError(data.message || 'Payment verification failed')
@@ -146,9 +158,27 @@ export default function PaymentSuccess() {
                 <p className="mt-1 text-lg font-bold text-gray-900">{orderNumber}</p>
               </div>
             )}
-            <p className="mt-4 text-sm text-gray-500">
-              You will be redirected to your order details shortly...
-            </p>
+            <div className="mt-4">
+              <div className="flex items-center justify-center gap-2">
+                {countdown > 0 ? (
+                  <>
+                    <div className="flex items-center justify-center h-8 w-8 rounded-full bg-blue-100">
+                      <span className="text-blue-600 font-bold text-sm">{countdown}</span>
+                    </div>
+                    <p className="text-sm text-gray-600">
+                      Redirecting to your order details...
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <Spinner size="sm" className="text-blue-600" />
+                    <p className="text-sm text-gray-600">
+                      Loading your order...
+                    </p>
+                  </>
+                )}
+              </div>
+            </div>
           </div>
           <div className="mt-8 space-y-4">
             {orderNumber && (

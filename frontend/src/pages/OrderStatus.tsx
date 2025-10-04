@@ -14,36 +14,63 @@ export default function OrderStatus() {
 
   useEffect(() => {
     if (!number) return
-    api
-      .get(endpoints.orderByNumber(number))
-      .then((r) => setOrder((r.data as any).order))
-      .catch(() => {})
-      .finally(() => setLoading(false))
+    
+    const fetchOrder = async () => {
+      try {
+        const response = await api.get(endpoints.orderByNumber(number))
+        setOrder((response.data as any).order)
+      } catch (error) {
+        console.error('Failed to fetch order:', error)
+        // Retry once after 1 second if initial fetch fails
+        setTimeout(async () => {
+          try {
+            const response = await api.get(endpoints.orderByNumber(number))
+            setOrder((response.data as any).order)
+          } catch (retryError) {
+            console.error('Retry failed:', retryError)
+          } finally {
+            setLoading(false)
+          }
+        }, 1000)
+        return
+      }
+      setLoading(false)
+    }
+    
+    fetchOrder()
   }, [number])
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <Spinner size="lg" className="text-blue-600" />
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50 py-12 px-4">
+        <div className="text-center">
+          <div className="mb-4 flex justify-center">
+            <Spinner size="lg" className="text-blue-600" />
+          </div>
+          <h3 className="text-lg font-semibold text-gray-900">Loading your order details...</h3>
+          <p className="mt-2 text-sm text-gray-600">Please wait a moment</p>
+        </div>
       </div>
     )
   }
 
   if (!order) {
     return (
-      <div className="mx-auto max-w-2xl">
-        <Card className="p-12 text-center">
-          <div className="mb-4 flex justify-center">
-            <svg className="h-20 w-20 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </div>
-          <h2 className="mb-2 text-2xl font-bold text-gray-900">Order not found</h2>
-          <p className="mb-6 text-gray-600">Please check your order number</p>
-          <Link to="/products">
-            <Button>Continue Shopping</Button>
-          </Link>
-        </Card>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-red-50 to-pink-50 py-12 px-4">
+        <div className="mx-auto max-w-2xl w-full">
+          <Card className="p-12 text-center">
+            <div className="mb-4 flex justify-center">
+              <svg className="h-20 w-20 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </div>
+            <h2 className="mb-2 text-2xl font-bold text-gray-900">Order not found</h2>
+            <p className="mb-6 text-gray-600">Please check your order number</p>
+            <Link to="/products">
+              <Button>Continue Shopping</Button>
+            </Link>
+          </Card>
+        </div>
       </div>
     )
   }
@@ -57,16 +84,19 @@ export default function OrderStatus() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
-      <div className="text-center">
-        <div className="mb-4 flex justify-center">
-          <svg className="h-20 w-20 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
+    <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-50 py-12 px-4">
+      <div className="mx-auto max-w-3xl space-y-6">
+        <div className="text-center">
+          <div className="mb-4 flex justify-center">
+            <div className="h-24 w-24 rounded-full bg-green-100 flex items-center justify-center">
+              <svg className="h-12 w-12 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+          </div>
+          <h2 className="text-3xl font-bold text-gray-900">Order Placed Successfully! 🎉</h2>
+          <p className="mt-2 text-gray-600">Thank you for your order</p>
         </div>
-        <h2 className="text-3xl font-bold text-gray-900">Order Placed Successfully!</h2>
-        <p className="mt-2 text-gray-600">Thank you for your order</p>
-      </div>
 
       <Card className="p-6">
         <div className="mb-6 flex items-center justify-between border-b pb-4">
@@ -108,10 +138,11 @@ export default function OrderStatus() {
         </div>
       </Card>
 
-      <div className="flex justify-center gap-4">
-        <Link to="/products">
-          <Button variant="outline">Continue Shopping</Button>
-        </Link>
+        <div className="flex justify-center gap-4">
+          <Link to="/products">
+            <Button variant="outline">Continue Shopping</Button>
+          </Link>
+        </div>
       </div>
     </div>
   )
