@@ -274,12 +274,162 @@ export default class ComplaintsController {
         const { to, from, subject, text } = request.only(['to', 'from', 'subject', 'text'])
 
         try {
+            // Extract complaint reference from subject if present
+            const refMatch = subject.match(/#(\d+)/)
+            const complaintRef = refMatch ? refMatch[1] : 'N/A'
+            
             await Mail.send((message) => {
                 message
                     .to(to)
-                    .from(from)
+                    .from(from || 'support@udaricrafts.com', 'Udari Crafts Support')
                     .subject(subject)
-                    .text(text)
+                    .html(`
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Response to Your Complaint</title>
+    <!--[if mso]>
+    <style type="text/css">
+        body, table, td {font-family: Arial, sans-serif !important;}
+    </style>
+    <![endif]-->
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;">
+    
+    <!-- Preheader Text (Hidden) -->
+    <div style="display: none; max-height: 0; overflow: hidden; opacity: 0;">
+        Response to your complaint - Udari Crafts Support Team
+    </div>
+    
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="width: 100%; border-collapse: collapse; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);">
+        <tr>
+            <td align="center" style="padding: 50px 20px;">
+                
+                <!-- Main Container -->
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="max-width: 600px; width: 100%; border-collapse: collapse; background: #ffffff; border-radius: 24px; box-shadow: 0 20px 60px rgba(0,0,0,0.15); overflow: hidden;">
+                    
+                    <!-- Header with Gradient -->
+                    <tr>
+                        <td style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 0; text-align: center;">
+                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="width: 100%; border-collapse: collapse;">
+                                <tr>
+                                    <td style="padding: 50px 40px; text-align: center;">
+                                        <h1 style="margin: 0 0 10px 0; color: #ffffff; font-size: 28px; font-weight: 800; letter-spacing: 2px;">UDARI CRAFTS</h1>
+                                        <p style="margin: 0; color: rgba(255,255,255,0.9); font-size: 14px; letter-spacing: 1px;">CUSTOMER SUPPORT</p>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
+                    <!-- Icon Badge -->
+                    <tr>
+                        <td align="center" style="padding: 40px 40px 20px;">
+                            <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+                                <tr>
+                                    <td align="center" style="width: 90px; height: 90px; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); border-radius: 50%; box-shadow: 0 10px 30px rgba(59, 130, 246, 0.3); vertical-align: middle; line-height: 90px;">
+                                        <span style="font-size: 48px; line-height: 90px;">💬</span>
+                                    </td>
+                                </tr>
+                            </table>
+                            <h2 style="margin: 24px 0 12px 0; color: #111827; font-size: 28px; font-weight: 800; letter-spacing: -0.5px;">Response to Your Complaint</h2>
+                            ${complaintRef !== 'N/A' ? `
+                            <div style="display: inline-block; padding: 8px 16px; background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); border-radius: 8px; margin-top: 8px;">
+                                <p style="margin: 0; color: #1e40af; font-size: 13px; font-weight: 700;">Reference: #${complaintRef}</p>
+                            </div>
+                            ` : ''}
+                        </td>
+                    </tr>
+
+                    <!-- Message Content -->
+                    <tr>
+                        <td style="padding: 0 40px 35px;">
+                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="width: 100%; border-collapse: collapse; background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%); border-radius: 16px; border: 2px solid #e5e7eb; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+                                <tr>
+                                    <td style="padding: 30px;">
+                                        <h3 style="margin: 0 0 16px 0; color: #1f2937; font-size: 16px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">
+                                            📩 Message from Support Team
+                                        </h3>
+                                        <div style="background: #ffffff; padding: 20px; border-radius: 12px; border-left: 4px solid #667eea;">
+                                            <p style="margin: 0; color: #374151; font-size: 15px; line-height: 1.7; white-space: pre-wrap;">${text}</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
+                    <!-- Action Section -->
+                    <tr>
+                        <td style="padding: 0 40px 35px;">
+                            <div style="background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); border-radius: 12px; padding: 24px; text-align: center; border: 2px solid #93c5fd;">
+                                <p style="margin: 0 0 16px 0; color: #1e40af; font-size: 15px; font-weight: 600; line-height: 1.6;">
+                                    💡 Need further assistance? We're here to help!
+                                </p>
+                                <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin: 0 auto;">
+                                    <tr>
+                                        <td style="border-radius: 10px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);">
+                                            <a href="mailto:support@udaricrafts.com" style="display: inline-block; padding: 14px 32px; color: #ffffff; text-decoration: none; font-weight: 700; font-size: 15px; letter-spacing: 0.5px;">
+                                                📧 Reply to This Email
+                                            </a>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <!-- Contact Information -->
+                    <tr>
+                        <td style="padding: 0 40px 40px;">
+                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="width: 100%; border-collapse: collapse;">
+                                <tr>
+                                    <td style="padding: 20px; background: #f9fafb; border-radius: 12px; text-align: center;">
+                                        <p style="margin: 0 0 12px 0; color: #6b7280; font-size: 14px; font-weight: 600;">📞 Contact Support</p>
+                                        <p style="margin: 0 0 4px 0; color: #374151; font-size: 13px;">
+                                            Email: <a href="mailto:support@udaricrafts.com" style="color: #667eea; text-decoration: none; font-weight: 600;">support@udaricrafts.com</a>
+                                        </p>
+                                        <p style="margin: 0; color: #374151; font-size: 13px;">
+                                            Phone: <span style="font-weight: 600;">+92 XXX XXXXXXX</span>
+                                        </p>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
+                    <!-- Footer -->
+                    <tr>
+                        <td style="background: linear-gradient(135deg, #1f2937 0%, #111827 100%); padding: 40px; text-align: center;">
+                            <h3 style="margin: 0 0 12px 0; color: #ffffff; font-size: 18px; font-weight: 700;">Thank You for Your Patience! 🙏</h3>
+                            <p style="margin: 0 0 20px 0; color: #d1d5db; font-size: 13px; line-height: 1.6;">
+                                We value your feedback and strive to provide the best service possible.<br>
+                                Your satisfaction is our priority.
+                            </p>
+                            
+                            <div style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px; margin-top: 20px;">
+                                <p style="margin: 0 0 8px 0; color: #9ca3af; font-size: 12px;">
+                                    © ${new Date().getFullYear()} Udari Crafts. All rights reserved.
+                                </p>
+                                <p style="margin: 0; color: #6b7280; font-size: 11px;">
+                                    Handcrafted with love ❤️
+                                </p>
+                            </div>
+                        </td>
+                    </tr>
+                    
+                </table>
+                
+            </td>
+        </tr>
+    </table>
+    
+</body>
+</html>
+                    `)
             })
 
             return response.send(Response('Email Send Successfully', { to, from, subject, text }))
